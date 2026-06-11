@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ChevronLeft, CheckCircle2 } from 'lucide-react';
@@ -19,7 +19,22 @@ interface FamilyOption {
   name: string;
 }
 
+/** Wrapper Suspense obligatoire en App Router pour useSearchParams() */
 export default function RegisterMemberPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="fixed inset-0 flex items-center justify-center bg-ios-bg-light">
+          <div className="h-10 w-10 rounded-full border-[3px] border-brand-200 border-t-brand-600 animate-spin" />
+        </div>
+      }
+    >
+      <RegisterMemberContent />
+    </Suspense>
+  );
+}
+
+function RegisterMemberContent() {
   const router = useRouter();
   const params = useSearchParams();
   const { registerMember } = useAuth();
