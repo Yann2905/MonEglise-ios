@@ -28,19 +28,29 @@ export default function MemberAttendancePage() {
   const [submitting, setSubmitting] = useState(false);
   const [loadingFams, setLoadingFams] = useState(true);
 
-  // Charge les familles dont l'user est responsable
+  // Charge TOUTES les familles dont l'user est membre (et pas le Comité)
   useEffect(() => {
     if (!user) return;
     (async () => {
       setLoadingFams(true);
+      const { data: links } = await supabase
+        .from('family_members')
+        .select('family_id')
+        .eq('user_id', user.id);
+      const ids = (links as { family_id: string }[] | null)?.map((l) => l.family_id) ?? [];
+      if (!ids.length) {
+        setMyFamilies([]);
+        setLoadingFams(false);
+        return;
+      }
       const { data } = await supabase
         .from('v_families_enriched')
         .select('*')
-        .eq('responsible_id', user.id)
+        .in('id', ids)
         .eq('is_institutional', false);
-      setMyFamilies((data as Family[]) ?? []);
-      // Auto-sélection si une seule
       const list = (data as Family[]) ?? [];
+      setMyFamilies(list);
+      // Auto-sélection si une seule
       if (list.length === 1) setSelectedFamily(list[0]);
       setLoadingFams(false);
     })();
@@ -154,16 +164,16 @@ export default function MemberAttendancePage() {
     );
   }
 
-  // Pas responsable → message
+  // Pas dans une famille → message
   if (myFamilies.length === 0) {
     return (
       <div>
         <NavBar title="Appel" back />
         <div className="text-center py-20 px-8">
           <ShieldAlert className="h-14 w-14 text-ios-gray3 mx-auto mb-3" />
-          <p className="text-[17px] font-semibold mb-1">Accès réservé</p>
+          <p className="text-[17px] font-semibold mb-1">Aucune famille</p>
           <p className="text-[14px] text-ios-gray">
-            Seuls les responsables de famille peuvent faire l'appel.
+            Demandez à votre pasteur de vous ajouter à une famille pour pouvoir faire l'appel.
           </p>
         </div>
       </div>

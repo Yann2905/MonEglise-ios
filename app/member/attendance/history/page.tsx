@@ -25,12 +25,12 @@ export default function MemberAttendanceHistoryPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      // Familles dont je suis responsable
-      const { data: fams } = await supabase
-        .from('families')
-        .select('id')
-        .eq('responsible_id', user.id);
-      const ids = (fams as { id: string }[] | null)?.map((f) => f.id) ?? [];
+      // Toutes les familles dont je suis membre
+      const { data: links } = await supabase
+        .from('family_members')
+        .select('family_id')
+        .eq('user_id', user.id);
+      const ids = (links as { family_id: string }[] | null)?.map((l) => l.family_id) ?? [];
       if (!ids.length) {
         setItems([]);
         return;

@@ -65,13 +65,14 @@ export default function MemberDashboard() {
       setUnread(unreadCount ?? 0);
       setMyFamiliesCount(fams ?? 0);
 
-      // Vérifie si l'user est responsable d'au moins une famille
-      const { count: respCount } = await supabase
-        .from('families')
-        .select('*', { count: 'exact', head: true })
-        .eq('responsible_id', user.id)
-        .eq('is_institutional', false);
-      setIsResponsible((respCount ?? 0) > 0);
+      // Tous les membres d'une famille (non-institutionnelle) peuvent faire l'appel
+      const { data: famLinks } = await supabase
+        .from('family_members')
+        .select('family_id, families!inner(is_institutional)')
+        .eq('user_id', user.id);
+      const canCall =
+        (famLinks as any[] | null)?.some((l) => l.families && !l.families.is_institutional) ?? false;
+      setIsResponsible(canCall);
     };
 
     loadAll();
@@ -187,7 +188,7 @@ export default function MemberDashboard() {
                 <ClipboardCheck className="h-6 w-6 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-[11px] font-bold tracking-[1.5px] text-white/80">RESPONSABLE</p>
+                <p className="text-[11px] font-bold tracking-[1.5px] text-white/80">APPEL D'ABSENCE</p>
                 <p className="text-[17px] font-semibold mt-0.5">Faire l'appel de ma famille</p>
               </div>
               <span className="text-2xl text-white/80">›</span>
