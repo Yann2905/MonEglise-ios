@@ -1,8 +1,9 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { useModal } from '@/lib/modal-context';
 
 interface IOSAlertAction {
   label: string;
@@ -22,6 +23,16 @@ interface IOSAlertProps {
 
 /** Dialog iOS style — petit modal centré avec actions séparées par des lignes */
 export function IOSAlert({ open, onClose, title, message, actions }: IOSAlertProps) {
+  const { open: openModal, close: closeModal } = useModal();
+  useEffect(() => {
+    if (open) {
+      openModal();
+      return () => {
+        closeModal();
+      };
+    }
+  }, [open, openModal, closeModal]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -31,7 +42,7 @@ export function IOSAlert({ open, onClose, title, message, actions }: IOSAlertPro
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-6"
+            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center px-6"
             onClick={onClose}
           >
             <motion.div

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/lib/auth-context';
+import { ThemeProvider } from '@/lib/theme-context';
+import { ModalProvider } from '@/lib/modal-context';
 
 export const metadata: Metadata = {
   title: 'MonÉglise',
@@ -12,13 +14,9 @@ export const metadata: Metadata = {
     capable: true,
     title: 'MonÉglise',
     statusBarStyle: 'black-translucent',
-    startupImage: [
-      { url: '/icons/apple-touch-icon.png' },
-    ],
+    startupImage: [{ url: '/icons/apple-touch-icon.png' }],
   },
-  formatDetection: {
-    telephone: false,
-  },
+  formatDetection: { telephone: false },
   icons: {
     icon: '/icons/icon-192.png',
     apple: '/icons/apple-touch-icon.png',
@@ -36,10 +34,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
-  ],
+  themeColor: '#FFFFFF',
 };
 
 export default function RootLayout({
@@ -50,33 +45,42 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <head>
-        {/* iOS PWA — meta indispensables pour "Add to home screen" */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="MonÉglise" />
         <meta name="format-detection" content="telephone=no" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        {/* Évite le flash blanc au load en sombre : applique la classe AVANT React */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('moneglise_theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}`,
+          }}
+        />
       </head>
       <body className="font-sans antialiased">
-        <AuthProvider>
-          {children}
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                background: 'rgba(28, 28, 30, 0.92)',
-                color: '#fff',
-                borderRadius: '14px',
-                padding: '12px 16px',
-                fontSize: '15px',
-                fontWeight: 500,
-                letterSpacing: '-0.015em',
-                backdropFilter: 'blur(20px)',
-              },
-            }}
-          />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ModalProvider>
+              {children}
+              <Toaster
+                position="top-center"
+                toastOptions={{
+                  duration: 3000,
+                  style: {
+                    background: 'rgba(28, 28, 30, 0.92)',
+                    color: '#fff',
+                    borderRadius: '14px',
+                    padding: '12px 16px',
+                    fontSize: '15px',
+                    fontWeight: 500,
+                    letterSpacing: '-0.015em',
+                    backdropFilter: 'blur(20px)',
+                  },
+                }}
+              />
+            </ModalProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ReactNode, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { useModal } from '@/lib/modal-context';
 
 interface BottomSheetProps {
   open: boolean;
@@ -21,15 +22,19 @@ export function BottomSheet({
   children,
   maxHeight = '90dvh',
 }: BottomSheetProps) {
-  // Empêche le scroll body quand sheet ouverte
+  const { open: openModal, close: closeModal } = useModal();
+
+  // Empêche le scroll body + signale au modal context (pour cacher tab bar)
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
+      openModal();
       return () => {
         document.body.style.overflow = '';
+        closeModal();
       };
     }
-  }, [open]);
+  }, [open, openModal, closeModal]);
 
   return (
     <AnimatePresence>
@@ -42,7 +47,7 @@ export function BottomSheet({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm"
           />
 
           {/* Sheet */}
@@ -63,19 +68,20 @@ export function BottomSheet({
               if (info.offset.y > 100 || info.velocity.y > 500) onClose();
             }}
             className={cn(
-              'fixed bottom-0 left-0 right-0 z-50',
-              'bg-white rounded-t-[24px]',
+              'fixed bottom-0 left-0 right-0 z-[101]',
+              'bg-white dark:bg-ios-bg-darkSecondary rounded-t-[24px]',
               'shadow-ios-xl',
               'pb-safe'
             )}
             style={{ maxHeight }}
           >
-            {/* Drag handle */}
             <div className="ios-handle" />
 
             {title && (
-              <div className="px-5 pt-2 pb-3 flex items-center justify-between border-b border-ios-separator/10">
-                <h2 className="text-[17px] font-semibold tracking-sf-tight">{title}</h2>
+              <div className="px-5 pt-2 pb-3 flex items-center justify-between border-b border-ios-separator/10 dark:border-white/10">
+                <h2 className="text-[17px] font-semibold tracking-sf-tight text-ios-label-light dark:text-white">
+                  {title}
+                </h2>
                 <button
                   onClick={onClose}
                   className="text-[15px] text-brand-600 font-medium active:opacity-60"
