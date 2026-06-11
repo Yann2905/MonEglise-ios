@@ -16,7 +16,7 @@ export const IOSTextField = forwardRef<HTMLInputElement, IOSTextFieldProps>(
     return (
       <div className={cn('w-full', containerClassName)}>
         {label && (
-          <label className="block text-[13px] font-semibold uppercase tracking-wider text-ios-gray mb-2 px-1">
+          <label className="block text-[13px] font-semibold uppercase tracking-[0.06em] text-ios-label-light/70 mb-2 px-1">
             {label}
           </label>
         )}
@@ -29,13 +29,14 @@ export const IOSTextField = forwardRef<HTMLInputElement, IOSTextFieldProps>(
           <input
             ref={ref}
             className={cn(
-              'w-full bg-ios-gray6 text-ios-label-light rounded-ios-lg',
+              'w-full bg-white text-ios-label-light rounded-ios-lg',
               'h-14 px-4 outline-none transition-all',
-              'placeholder:text-ios-gray font-normal tracking-sf-tight',
-              'focus:bg-white focus:ring-2 focus:ring-brand-500/40',
+              'placeholder:text-ios-gray2 font-medium tracking-sf-tight',
+              'border border-ios-gray5',
+              'focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20',
               leftIcon && 'pl-12',
               rightIcon && 'pr-12',
-              error && 'ring-2 ring-ios-red/40',
+              error && 'border-ios-red focus:border-ios-red focus:ring-ios-red/20',
               className
             )}
             style={{ fontSize: 17 }}

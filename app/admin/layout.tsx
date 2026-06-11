@@ -40,9 +40,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <TabBar
         items={tabs}
-        activeKey={tabs.find((t) => pathname === t.key || pathname.startsWith(t.key + '/'))?.key ?? '/admin'}
+        activeKey={resolveActiveTab(pathname, tabs.map(t => t.key))}
         onChange={(key) => router.push(key)}
       />
     </div>
   );
+}
+
+/**
+ * Choisit l'onglet actif en privilégiant les matches LES PLUS LONGS.
+ * Sinon /admin/members serait matché par /admin (qui est un prefix de /admin/members).
+ */
+function resolveActiveTab(pathname: string, keys: string[]): string {
+  const sorted = [...keys].sort((a, b) => b.length - a.length);
+  for (const k of sorted) {
+    if (pathname === k || pathname.startsWith(k + '/')) return k;
+  }
+  return keys[0];
 }

@@ -37,9 +37,17 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
 
       <TabBar
         items={tabs}
-        activeKey={tabs.find((t) => pathname === t.key || pathname.startsWith(t.key + '/'))?.key ?? '/member'}
+        activeKey={resolveActiveTab(pathname, tabs.map(t => t.key))}
         onChange={(key) => router.push(key)}
       />
     </div>
   );
+}
+
+function resolveActiveTab(pathname: string, keys: string[]): string {
+  const sorted = [...keys].sort((a, b) => b.length - a.length);
+  for (const k of sorted) {
+    if (pathname === k || pathname.startsWith(k + '/')) return k;
+  }
+  return keys[0];
 }

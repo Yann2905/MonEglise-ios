@@ -1,12 +1,191 @@
 'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Plus, ChevronRight, Star, UsersRound } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useAuth } from '@/lib/auth-context';
+import { supabase } from '@/lib/supabase';
 import { NavBar } from '@/components/ui/NavBar';
-import { ComingSoon } from '@/components/ui/ComingSoon';
+import { IOSAlert } from '@/components/ui/IOSAlert';
+import { BottomSheet } from '@/components/ui/BottomSheet';
+import { IOSButton } from '@/components/ui/IOSButton';
+import { IOSTextField } from '@/components/ui/IOSTextField';
+import { cn } from '@/lib/utils';
+import type { Family } from '@/lib/types';
 
 export default function AdminFamiliesPage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [families, setFamilies] = useState<Family[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [showDelete, setShowDelete] = useState<Family | null>(null);
+  const [newName, setNewName] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (!user?.church_id) return;
+    const churchId = user.church_id;
+
+    const load = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('v_families_enriched')
+        .select('*')
+        .eq('church_id', churchId)
+        .order('is_institutional', { ascending: false })
+        .order('name');
+      setFamilies((data as Family[]) ?? []);
+      setLoading(false);
+    };
+
+    load();
+    const ch = supabase
+      .channel(`admin_families_${churchId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'families', filter: `church_id=eq.${churchId}` }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'family_members' }, load)
+      .subscribe();
+    return () => {
+      ch.unsubscribe();
+    };
+  }, [user]);
+
+  const createFamily = async () => {
+    if (!newName.trim() || !user) return;
+    setCreating(true);
+    const { error } = await supabase.from('families').insert({
+      name: newName.trim(),
+      church_id: user.church_id,
+      responsible_id: user.id, // par défaut admin (peut être changé après)
+    });
+    setCreating(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success('Famille créée');
+      setNewName('');
+      setShowCreate(false);
+    }
+  };
+
+  const deleteFamily = async () => {
+    if (!showDelete) return;
+    const { error } = await supabase.from('families').delete().eq('id', showDelete.id);
+    if (error) toast.error(error.message);
+    else toast.success('Famille supprimée');
+    setShowDelete(null);
+  };
+
   return (
     <div>
-      <NavBar largeTitle="Familles" />
-      <ComingSoon title="Gestion des familles" description="Bientôt disponible dans la prochaine mise à jour." />
+      <NavBar
+        largeTitle="Familles"
+        trailing={
+          <button
+            onClick={() => setShowCreate(true)}
+            className="p-2 -mr-2 active:opacity-60"
+            aria-label="Ajouter"
+          >
+            <Plus className="h-6 w-6 text-brand-600" strokeWidth={2.5} />
+          </button>
+        }
+      />
+
+      <div className="px-4">
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <div className="h-8 w-8 rounded-full border-[3px] border-brand-200 border-t-brand-600 animate-spin" />
+          </div>
+        ) : families.length === 0 ? (
+          <div className="text-center py-16">
+            <UsersRound className="h-14 w-14 text-ios-gray3 mx-auto mb-3" />
+            <p className="text-ios-gray">Aucune famille</p>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="mt-4 text-brand-600 font-semibold"
+            >
+              + Créer la première
+            </button>
+          </div>
+        ) : (
+          <div className="mt-2 bg-white rounded-ios-lg overflow-hidden shadow-ios-sm">
+            {families.map((f, i) => (
+              <button
+                key={f.id}
+                onClick={() => router.push(`/admin/families/${f.id}`)}
+                onContextMenu={(e) => {
+                  if (!f.is_institutional) {
+                    e.preventDefault();
+                    setShowDelete(f);
+                  }
+                }}
+                className={cn(
+                  'w-full px-4 py-3 flex items-center gap-3 active:bg-ios-gray6 transition-colors',
+                  i < families.length - 1 && 'border-b border-ios-separator/10'
+                )}
+              >
+                <div
+                  className={cn(
+                    'flex h-10 w-10 items-center justify-center rounded-ios',
+                    f.is_institutional ? 'bg-orange-100 text-ios-orange' : 'bg-green-100 text-ios-green'
+                  )}
+                >
+                  {f.is_institutional ? <Star className="h-5 w-5" /> : <UsersRound className="h-5 w-5" />}
+                </div>
+                <div className="flex-1 text-left min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[16px] font-medium tracking-sf-tight truncate">{f.name}</p>
+                    {f.is_institutional && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-ios-orange/15 text-ios-orange">
+                        Officiel
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[13px] text-ios-gray">
+                    {f.member_count} membre{f.member_count > 1 ? 's' : ''}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-ios-gray3 flex-shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Modal créer famille */}
+      <BottomSheet open={showCreate} onClose={() => setShowCreate(false)} title="Nouvelle famille">
+        <div className="px-5 pb-6 pt-2">
+          <p className="text-[14px] text-ios-gray mb-3">
+            Donnez un nom à votre groupe (Chorale, Jeunes, etc.)
+          </p>
+          <IOSTextField
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="Nom de la famille"
+            autoFocus
+          />
+          <IOSButton
+            fullWidth
+            size="lg"
+            className="mt-4"
+            onClick={createFamily}
+            isLoading={creating}
+          >
+            Créer
+          </IOSButton>
+        </div>
+      </BottomSheet>
+
+      <IOSAlert
+        open={!!showDelete}
+        onClose={() => setShowDelete(null)}
+        title={`Supprimer "${showDelete?.name}" ?`}
+        message="Tous les membres seront retirés. Cette action est irréversible."
+        actions={[
+          { label: 'Annuler', variant: 'cancel' },
+          { label: 'Supprimer', variant: 'destructive', onClick: deleteFamily },
+        ]}
+      />
     </div>
   );
 }
