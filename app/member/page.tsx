@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Calendar, BookOpen, MessageCircle, UsersRound, Headphones } from 'lucide-react';
+import { Calendar, BookOpen, MessageCircle, UsersRound, Headphones, ClipboardCheck } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Avatar } from '@/components/ui/Avatar';
@@ -18,6 +18,7 @@ export default function MemberDashboard() {
   const [nextService, setNextService] = useState<any>(null);
   const [unread, setUnread] = useState(0);
   const [myFamiliesCount, setMyFamiliesCount] = useState(0);
+  const [isResponsible, setIsResponsible] = useState(false);
 
   useEffect(() => {
     if (!user?.church_id) return;
@@ -63,6 +64,14 @@ export default function MemberDashboard() {
       setNextService(service);
       setUnread(unreadCount ?? 0);
       setMyFamiliesCount(fams ?? 0);
+
+      // Vérifie si l'user est responsable d'au moins une famille
+      const { count: respCount } = await supabase
+        .from('families')
+        .select('*', { count: 'exact', head: true })
+        .eq('responsible_id', user.id)
+        .eq('is_institutional', false);
+      setIsResponsible((respCount ?? 0) > 0);
     };
 
     loadAll();
@@ -160,6 +169,32 @@ export default function MemberDashboard() {
           onClick={() => router.push('/member/families')}
         />
       </div>
+
+      {/* Carte "Faire l'appel" pour les responsables */}
+      {isResponsible && (
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.5 }}
+          className="mx-4 mt-5"
+        >
+          <button
+            onClick={() => router.push('/member/attendance')}
+            className="w-full rounded-ios-xl bg-gradient-to-br from-ios-orange to-orange-400 p-5 shadow-ios-lg text-white text-left active:opacity-90"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-ios bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <ClipboardCheck className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[11px] font-bold tracking-[1.5px] text-white/80">RESPONSABLE</p>
+                <p className="text-[17px] font-semibold mt-0.5">Faire l'appel de ma famille</p>
+              </div>
+              <span className="text-2xl text-white/80">›</span>
+            </div>
+          </button>
+        </motion.div>
+      )}
 
       {/* Hero dernière prédication */}
       {latestSermon?.audio_url && (

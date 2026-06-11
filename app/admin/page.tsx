@@ -180,13 +180,27 @@ export default function AdminDashboard() {
         </motion.div>
       )}
 
-      {/* Ajouter une prédication CTA */}
+      {/* CTAs */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="mx-4 mt-5"
+        className="mx-4 mt-5 space-y-3"
       >
+        <button
+          onClick={() => router.push('/admin/sermons')}
+          className="w-full h-14 rounded-ios-lg bg-white shadow-ios-sm text-brand-600 font-semibold text-[15px] flex items-center justify-between px-5 active:bg-ios-gray6"
+        >
+          <span className="flex items-center gap-2"><Headphones className="h-5 w-5" /> Mes prédications</span>
+          <span className="text-ios-gray3">›</span>
+        </button>
+        <button
+          onClick={() => router.push('/admin/services')}
+          className="w-full h-14 rounded-ios-lg bg-white shadow-ios-sm text-brand-600 font-semibold text-[15px] flex items-center justify-between px-5 active:bg-ios-gray6"
+        >
+          <span className="flex items-center gap-2"><Calendar className="h-5 w-5" /> Programmes & cultes</span>
+          <span className="text-ios-gray3">›</span>
+        </button>
         <button
           onClick={() => router.push('/admin/sermons/new')}
           className="w-full h-14 rounded-ios-lg border-2 border-dashed border-brand-300 text-brand-600 font-semibold text-[15px] flex items-center justify-center gap-2 active:bg-brand-50"
