@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LogOut, Phone, MapPin, ShieldCheck, Moon, Sun } from 'lucide-react';
+import { LogOut, Phone, MapPin, ShieldCheck, Moon, Sun, Pencil } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
 import { AvatarEditor } from '@/components/ui/AvatarEditor';
@@ -35,6 +35,13 @@ export default function MemberProfilePage() {
             {user.first_name} {user.last_name}
           </h2>
           <p className="mt-1 text-[14px] text-ios-gray">{labelOfChurchRole(user.church_role)}</p>
+          <button
+            onClick={() => router.push('/member/profile/edit')}
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-50 text-brand-600 text-[13px] font-semibold active:opacity-70"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Modifier le profil
+          </button>
         </motion.div>
 
         <SectionLabel>Informations</SectionLabel>

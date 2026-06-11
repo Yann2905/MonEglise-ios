@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, ChevronRight, User as UserIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +14,7 @@ import { CHURCH_ROLE_LABELS, labelOfChurchRole, cn } from '@/lib/utils';
 import type { User } from '@/lib/types';
 
 export default function AdminMembersPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [members, setMembers] = useState<User[]>([]);
   const [search, setSearch] = useState('');
@@ -154,6 +156,18 @@ export default function AdminMembersPage() {
                 {labelOfChurchRole(selectedMember.church_role)}
               </span>
             </div>
+
+            <button
+              onClick={() => {
+                const id = selectedMember.id;
+                setSelectedMember(null);
+                router.push(`/admin/members/${id}`);
+              }}
+              className="w-full mb-4 px-4 py-3.5 rounded-ios-lg bg-brand-50 text-brand-600 font-semibold text-left active:bg-brand-100 flex items-center gap-2"
+            >
+              <UserIcon className="h-5 w-5" />
+              Voir le profil complet
+            </button>
 
             <p className="text-[13px] font-semibold uppercase tracking-wider text-ios-gray mb-2 px-1">
               Promouvoir au rang de

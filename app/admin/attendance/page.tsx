@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CheckCircle2, Calendar } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { CheckCircle2, Calendar, History } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -12,6 +13,7 @@ import { cn, labelOfChurchRole } from '@/lib/utils';
 import type { Family, User } from '@/lib/types';
 
 export default function AdminAttendancePage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [families, setFamilies] = useState<Family[]>([]);
   const [selectedFamily, setSelectedFamily] = useState<Family | null>(null);
@@ -121,7 +123,18 @@ export default function AdminAttendancePage() {
 
   return (
     <div>
-      <NavBar largeTitle="Appel" />
+      <NavBar
+        largeTitle="Appel"
+        trailing={
+          <button
+            onClick={() => router.push('/admin/attendance/history')}
+            className="p-2 -mr-2 active:opacity-60"
+            aria-label="Historique"
+          >
+            <History className="h-6 w-6 text-brand-600" />
+          </button>
+        }
+      />
 
       <div className="px-4 pt-2 pb-4">
         {!selectedFamily ? (
