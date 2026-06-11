@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ────────────────────────────────────────────────────────────
+   Reset + base iOS
+   ──────────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+
+  body {
+    @apply bg-ios-bg-light text-ios-label-light;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+      Inter, system-ui, sans-serif;
+    letter-spacing: -0.015em;
+    /* Empêche le scroll élastique horizontal sur iOS */
+    overflow-x: hidden;
+  }
+
+  /* Tap target minimum iOS = 44px */
+  button,
+  a[role='button'] {
+    @apply touch-manipulation select-none;
+  }
+
+  /* Désactive le double-tap zoom sur iOS */
+  * {
+    touch-action: manipulation;
+  }
+
+  /* Scrollbar invisible (iOS-like) */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    scrollbar-width: none;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────
+   Composants utilitaires iOS
+   ──────────────────────────────────────────────────────────── */
+@layer components {
+  /* Backdrop blur navbar/tabbar (style iOS 18) */
+  .ios-glass {
+    @apply bg-white/72 backdrop-blur-ios backdrop-saturate-150;
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  .ios-glass-dark {
+    background: rgba(28, 28, 30, 0.72);
+    @apply backdrop-blur-ios;
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  /* Squircle iOS (coins continus, plus doux que rounded standard) */
+  .ios-squircle {
+    border-radius: 22px;
+    /* Bug Safari : besoin de masquer overflow pour vrai squircle */
+    overflow: hidden;
+  }
+
+  /* Carte iOS inset grouped style */
+  .ios-card {
+    @apply bg-white rounded-ios-lg shadow-ios-sm;
+  }
+
+  /* Bouton primaire iOS (gros pill) */
+  .ios-btn-primary {
+    @apply bg-brand-600 text-white font-semibold rounded-ios-lg py-4 px-6
+           active:opacity-80 active:scale-[0.98] transition-all duration-150
+           shadow-ios;
+    letter-spacing: -0.015em;
+  }
+
+  .ios-btn-secondary {
+    @apply bg-ios-gray6 text-brand-600 font-semibold rounded-ios-lg py-4 px-6
+           active:opacity-70 active:scale-[0.98] transition-all duration-150;
+  }
+
+  /* Champ texte iOS */
+  .ios-input {
+    @apply w-full bg-ios-gray6 text-ios-label-light rounded-ios-lg
+           px-4 py-4 outline-none transition-all
+           placeholder:text-ios-gray
+           focus:ring-2 focus:ring-brand-500/30;
+    font-size: 17px;
+    letter-spacing: -0.015em;
+  }
+
+  /* Pill iOS (badge) */
+  .ios-pill {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+
+  /* Drag handle pour bottom sheet */
+  .ios-handle {
+    @apply mx-auto mt-2 mb-1 h-1.5 w-9 rounded-full bg-ios-gray3;
+  }
+
+  /* Halo Apple Intelligence (gradient subtil) */
+  .ios-glow-bg {
+    background: radial-gradient(
+      ellipse at top,
+      rgba(35, 74, 135, 0.10) 0%,
+      transparent 60%
+    );
+  }
+
+  /* Texte large title iOS (44pt, w600) */
+  .ios-large-title {
+    font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    line-height: 1.15;
+  }
+
+  /* Body iOS (17pt) */
+  .ios-body {
+    font-size: 17px;
+    letter-spacing: -0.015em;
+    line-height: 1.4;
+  }
+
+  /* Caption iOS (13pt secondary) */
+  .ios-caption {
+    @apply text-ios-gray;
+    font-size: 13px;
+    letter-spacing: -0.005em;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────
+   Animations / transitions iOS spring
+   ──────────────────────────────────────────────────────────── */
+@layer utilities {
+  .transition-spring {
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .transition-ease-out {
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Effet "press" (assombrir légèrement au tap) */
+  .ios-press {
+    @apply transition-all duration-150 active:opacity-70 active:scale-[0.97];
+  }
+
+  /* Safe areas */
+  .pt-safe { padding-top: var(--safe-top); }
+  .pb-safe { padding-bottom: var(--safe-bottom); }
+  .pl-safe { padding-left: var(--safe-left); }
+  .pr-safe { padding-right: var(--safe-right); }
+
+  /* Hide scrollbar mais permet scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
