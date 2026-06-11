@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, ChevronRight, Star, UsersRound } from 'lucide-react';
+import { Plus, ChevronRight, Star, UsersRound, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -23,6 +23,10 @@ export default function AdminFamiliesPage() {
   const [showDelete, setShowDelete] = useState<Family | null>(null);
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
+  const [actionsFamily, setActionsFamily] = useState<Family | null>(null);
+  const [renameFamily, setRenameFamily] = useState<Family | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [renaming, setRenaming] = useState(false);
 
   useEffect(() => {
     if (!user?.church_id) return;
@@ -76,6 +80,22 @@ export default function AdminFamiliesPage() {
     setShowDelete(null);
   };
 
+  const doRename = async () => {
+    if (!renameFamily || !renameValue.trim()) return;
+    setRenaming(true);
+    const { error } = await supabase
+      .from('families')
+      .update({ name: renameValue.trim() })
+      .eq('id', renameFamily.id);
+    setRenaming(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success('Famille renommée');
+      setRenameFamily(null);
+      setRenameValue('');
+    }
+  };
+
   return (
     <div>
       <NavBar
@@ -110,43 +130,52 @@ export default function AdminFamiliesPage() {
         ) : (
           <div className="mt-2 bg-white rounded-ios-lg overflow-hidden shadow-ios-sm">
             {families.map((f, i) => (
-              <button
+              <div
                 key={f.id}
-                onClick={() => router.push(`/admin/families/${f.id}`)}
-                onContextMenu={(e) => {
-                  if (!f.is_institutional) {
-                    e.preventDefault();
-                    setShowDelete(f);
-                  }
-                }}
                 className={cn(
-                  'w-full px-4 py-3 flex items-center gap-3 active:bg-ios-gray6 transition-colors',
+                  'w-full flex items-center active:bg-ios-gray6 transition-colors',
                   i < families.length - 1 && 'border-b border-ios-separator/10'
                 )}
               >
-                <div
-                  className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-ios',
-                    f.is_institutional ? 'bg-orange-100 text-ios-orange' : 'bg-green-100 text-ios-green'
-                  )}
+                <button
+                  onClick={() => router.push(`/admin/families/${f.id}`)}
+                  className="flex-1 flex items-center gap-3 px-4 py-3 text-left min-w-0"
                 >
-                  {f.is_institutional ? <Star className="h-5 w-5" /> : <UsersRound className="h-5 w-5" />}
-                </div>
-                <div className="flex-1 text-left min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-[16px] font-medium tracking-sf-tight truncate">{f.name}</p>
-                    {f.is_institutional && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-ios-orange/15 text-ios-orange">
-                        Officiel
-                      </span>
+                  <div
+                    className={cn(
+                      'flex h-10 w-10 items-center justify-center rounded-ios flex-shrink-0',
+                      f.is_institutional ? 'bg-orange-100 text-ios-orange' : 'bg-green-100 text-ios-green'
                     )}
+                  >
+                    {f.is_institutional ? <Star className="h-5 w-5" /> : <UsersRound className="h-5 w-5" />}
                   </div>
-                  <p className="text-[13px] text-ios-gray">
-                    {f.member_count} membre{f.member_count > 1 ? 's' : ''}
-                  </p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-ios-gray3 flex-shrink-0" />
-              </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[16px] font-medium tracking-sf-tight truncate">{f.name}</p>
+                      {f.is_institutional && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-ios-orange/15 text-ios-orange flex-shrink-0">
+                          Officiel
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[13px] text-ios-gray">
+                      {f.member_count} membre{f.member_count > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </button>
+                {!f.is_institutional && (
+                  <button
+                    onClick={() => setActionsFamily(f)}
+                    className="px-3 py-3 text-ios-gray active:opacity-60"
+                    aria-label="Actions"
+                  >
+                    <MoreHorizontal className="h-5 w-5" />
+                  </button>
+                )}
+                <span className="pr-3">
+                  <ChevronRight className="h-4 w-4 text-ios-gray3" />
+                </span>
+              </div>
             ))}
           </div>
         )}
@@ -172,6 +201,56 @@ export default function AdminFamiliesPage() {
             isLoading={creating}
           >
             Créer
+          </IOSButton>
+        </div>
+      </BottomSheet>
+
+      {/* Actions sheet (Renommer / Supprimer) */}
+      <BottomSheet
+        open={!!actionsFamily}
+        onClose={() => setActionsFamily(null)}
+        title={actionsFamily?.name}
+      >
+        {actionsFamily && (
+          <div className="px-5 pb-6 pt-2 space-y-2">
+            <button
+              onClick={() => {
+                const f = actionsFamily;
+                setRenameValue(f.name);
+                setRenameFamily(f);
+                setActionsFamily(null);
+              }}
+              className="w-full px-4 py-3.5 rounded-ios-lg bg-brand-50 text-brand-600 font-semibold text-left active:bg-brand-100 flex items-center gap-2"
+            >
+              <Pencil className="h-5 w-5" />
+              Renommer
+            </button>
+            <button
+              onClick={() => {
+                const f = actionsFamily;
+                setActionsFamily(null);
+                setShowDelete(f);
+              }}
+              className="w-full px-4 py-3.5 rounded-ios-lg bg-ios-red/10 text-ios-red font-semibold text-left active:bg-ios-red/20 flex items-center gap-2"
+            >
+              <Trash2 className="h-5 w-5" />
+              Supprimer
+            </button>
+          </div>
+        )}
+      </BottomSheet>
+
+      {/* Rename sheet */}
+      <BottomSheet open={!!renameFamily} onClose={() => setRenameFamily(null)} title="Renommer la famille">
+        <div className="px-5 pb-6 pt-2">
+          <IOSTextField
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            placeholder="Nouveau nom"
+            autoFocus
+          />
+          <IOSButton fullWidth size="lg" className="mt-4" onClick={doRename} isLoading={renaming}>
+            Enregistrer
           </IOSButton>
         </div>
       </BottomSheet>

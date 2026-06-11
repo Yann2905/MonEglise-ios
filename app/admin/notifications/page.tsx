@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Send, BellRing } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
@@ -13,6 +14,7 @@ import { formatDateTime, cn } from '@/lib/utils';
 import type { Notification, Family } from '@/lib/types';
 
 export default function AdminNotificationsPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [tab, setTab] = useState<'received' | 'send'>('received');
   const [received, setReceived] = useState<Notification[]>([]);
@@ -161,30 +163,47 @@ export default function AdminNotificationsPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {received.map((n) => (
-                <button
-                  key={n.id}
-                  onClick={() => {
+              {received.map((n) => {
+                const isAbsenceNotif = n.type === 'absence';
+                const absenceId = (n.metadata as any)?.absence_id;
+                const handleTap = () => {
+                  if (!n.is_read) markAsRead(n.id);
+                  if (isAbsenceNotif && absenceId) {
+                    router.push(`/admin/absence/${absenceId}`);
+                  } else {
                     setOpenNotif(n);
-                    if (!n.is_read) markAsRead(n.id);
-                  }}
-                  className="w-full bg-white rounded-ios-lg p-4 text-left shadow-ios-sm active:shadow-ios"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-ios bg-brand-50 flex items-center justify-center text-brand-600 flex-shrink-0">
-                      <BellRing className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-[15px] font-semibold truncate">{n.title}</p>
-                        {!n.is_read && <span className="h-2 w-2 rounded-full bg-ios-blue flex-shrink-0" />}
+                  }
+                };
+                return (
+                  <button
+                    key={n.id}
+                    onClick={handleTap}
+                    className="w-full bg-white rounded-ios-lg p-4 text-left shadow-ios-sm active:shadow-ios"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={cn(
+                          'h-10 w-10 rounded-ios flex items-center justify-center flex-shrink-0',
+                          isAbsenceNotif ? 'bg-ios-red/10 text-ios-red' : 'bg-brand-50 text-brand-600'
+                        )}
+                      >
+                        <BellRing className="h-5 w-5" />
                       </div>
-                      <p className="text-[13px] text-ios-gray mt-0.5 line-clamp-2">{n.message}</p>
-                      <p className="text-[11px] text-ios-gray3 mt-1">{formatDateTime(n.created_at)}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-[15px] font-semibold truncate">{n.title}</p>
+                          {!n.is_read && <span className="h-2 w-2 rounded-full bg-ios-blue flex-shrink-0" />}
+                        </div>
+                        <p className="text-[13px] text-ios-gray mt-0.5 line-clamp-2">{n.message}</p>
+                        <p className="text-[11px] text-ios-gray3 mt-1">{formatDateTime(n.created_at)}</p>
+                      </div>
+                      {isAbsenceNotif && absenceId && (
+                        <span className="text-ios-gray3 text-xl">›</span>
+                      )}
                     </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           )
         ) : (

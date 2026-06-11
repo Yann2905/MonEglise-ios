@@ -100,18 +100,23 @@ export default function MemberAttendancePage() {
         if (ex) serviceId = ex.id as string;
       } catch {}
 
-      await supabase.from('absences').insert({
-        family_id: selectedFamily.id,
-        family_name: selectedFamily.name,
-        date: today,
-        created_by: user.id,
-        absent_count: absentList.length,
-        absent_members: absentList,
-        service_id: serviceId,
-        actor_name: `${user.first_name} ${user.last_name}`,
-      });
+      const { data: absRow } = await supabase
+        .from('absences')
+        .insert({
+          family_id: selectedFamily.id,
+          family_name: selectedFamily.name,
+          date: today,
+          created_by: user.id,
+          absent_count: absentList.length,
+          absent_members: absentList,
+          service_id: serviceId,
+          actor_name: `${user.first_name} ${user.last_name}`,
+        })
+        .select('id')
+        .single();
+      const absenceId = absRow?.id as string | undefined;
 
-      // Notifie l'admin
+      // Notifie l'admin avec metadata.absence_id pour permettre la navigation
       try {
         const { data: church } = await supabase
           .from('churches')
@@ -120,12 +125,14 @@ export default function MemberAttendancePage() {
           .maybeSingle();
         if (church?.admin_id && church.admin_id !== user.id) {
           await supabase.from('notifications').insert({
-            title: `Appel — ${selectedFamily.name}`,
-            message: `${user.first_name} ${user.last_name} a enregistré ${absentList.length} absent${absentList.length > 1 ? 's' : ''}.`,
+            title: `Appel : ${selectedFamily.name}`,
+            message: `${user.first_name} ${user.last_name} a enregistré ${absentList.length} absent${absentList.length > 1 ? 's' : ''} sur ${members.length}`,
             type: 'absence',
             sender_id: user.id,
             receiver_id: church.admin_id,
+            actor_name: `${user.first_name} ${user.last_name}`,
             is_read: false,
+            metadata: absenceId ? { absence_id: absenceId } : null,
           });
         }
       } catch {}

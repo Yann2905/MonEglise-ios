@@ -238,6 +238,15 @@ export default function FamilyDetailPage() {
       >
         {selectedMember && (
           <div className="px-5 pb-6 pt-2 space-y-2">
+            <a
+              href={`tel:${selectedMember.phone}`}
+              className="w-full block px-4 py-3.5 rounded-ios-lg bg-ios-green/10 text-ios-green font-semibold text-left active:bg-ios-green/20"
+            >
+              <svg className="h-5 w-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+              </svg>
+              Appeler
+            </a>
             {family.responsible_id !== selectedMember.id && !family.is_institutional && (
               <button
                 onClick={() => setResponsible(selectedMember.id)}
@@ -245,6 +254,24 @@ export default function FamilyDetailPage() {
               >
                 <Star className="h-5 w-5 inline mr-2" />
                 Désigner comme responsable
+              </button>
+            )}
+            {family.responsible_id === selectedMember.id && !family.is_institutional && (
+              <button
+                onClick={async () => {
+                  const uid = selectedMember.id;
+                  setSelectedMember(null);
+                  const { error } = await supabase
+                    .from('families')
+                    .update({ responsible_id: null })
+                    .eq('id', id);
+                  if (error) toast.error(error.message);
+                  else toast.success('Responsable retiré');
+                }}
+                className="w-full px-4 py-3.5 rounded-ios-lg bg-ios-orange/10 text-ios-orange font-semibold text-left active:bg-ios-orange/20"
+              >
+                <Star className="h-5 w-5 inline mr-2" />
+                Retirer du poste de responsable
               </button>
             )}
             <button
