@@ -18,14 +18,21 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Affichage manuel des notifs en arrière-plan
+// onBackgroundMessage : Firebase SDK affiche DÉJÀ la notification
+// automatiquement quand le payload contient un champ `notification`.
+// On n'affiche manuellement QUE pour les payloads data-only (sinon doublon).
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || payload.data?.title || 'MonÉglise';
+  if (payload.notification) {
+    // Firebase a déjà géré → on ne fait rien (sinon 2 notifs identiques)
+    return;
+  }
+  const title = payload.data?.title || 'MonÉglise';
   const options = {
-    body: payload.notification?.body || payload.data?.message || '',
+    body: payload.data?.message || '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
     tag: payload.data?.type || 'moneglise',
+    renotify: false,
     data: payload.data || {},
   };
   self.registration.showNotification(title, options);

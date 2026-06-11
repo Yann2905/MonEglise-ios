@@ -1,7 +1,7 @@
 'use client';
 
 import { initializeApp, getApps } from 'firebase/app';
-import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging';
+import { getMessaging, getToken, isSupported } from 'firebase/messaging';
 import { supabase } from './supabase';
 
 const config = {
@@ -60,19 +60,9 @@ export async function subscribePush(userId: string): Promise<{ ok: boolean; reas
         { onConflict: 'token' }
       );
 
-    // Foreground messages : on relaiera vers les toasts
-    onMessage(messaging, (payload) => {
-      const title = payload.notification?.title || payload.data?.title || 'MonÉglise';
-      const body = payload.notification?.body || payload.data?.message || '';
-      // Affiche une notif Notification API (avec son et badge)
-      if (Notification.permission === 'granted') {
-        new Notification(title, {
-          body,
-          icon: '/icons/icon-192.png',
-          tag: payload.data?.type || 'moneglise',
-        });
-      }
-    });
+    // Foreground messages : silencieux côté Notification API (sinon doublons
+    // avec le service worker qui montre déjà la notif). Le Realtime Supabase
+    // s'occupe de mettre à jour l'UI en temps réel (badges, listes, etc.).
 
     return { ok: true };
   } catch (e: any) {
