@@ -89,7 +89,7 @@ export default function MemberDashboard() {
         <div className="absolute -top-10 -left-10 h-60 w-60 rounded-full bg-brand-400/30 blur-3xl" />
         <div className="absolute -bottom-10 -right-10 h-60 w-60 rounded-full bg-brand-800/40 blur-3xl" />
 
-        <div className="relative px-5 pt-4 pb-16">
+        <div className="relative px-5 pt-4 pb-7">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/80 text-[13px] font-medium uppercase tracking-wide">{churchName}</p>
@@ -113,8 +113,8 @@ export default function MemberDashboard() {
         </div>
       </div>
 
-      {/* Pastel cards */}
-      <div className="-mt-10 px-4 grid grid-cols-2 gap-3 relative z-10">
+      {/* Pastel cards SOUS le gradient */}
+      <div className="mt-5 px-4 grid grid-cols-2 gap-3">
         <PastelCard
           delay={0.05}
           icon={<BookOpen className="h-5 w-5" />}

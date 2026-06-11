@@ -92,7 +92,7 @@ export default function AdminDashboard() {
         <div className="absolute -top-10 -left-10 h-60 w-60 rounded-full bg-brand-400/30 blur-3xl" />
         <div className="absolute -bottom-10 -right-10 h-60 w-60 rounded-full bg-brand-800/40 blur-3xl" />
 
-        <div className="relative px-5 pt-4 pb-16">
+        <div className="relative px-5 pt-4 pb-7">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/80 text-[13px] font-medium tracking-wide uppercase">Pasteur principal</p>
@@ -114,8 +114,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Stats cards qui débordent du gradient */}
-      <div className="-mt-10 px-4 grid grid-cols-2 gap-3 relative z-10">
+      {/* Stats cards SOUS le gradient */}
+      <div className="mt-5 px-4 grid grid-cols-2 gap-3">
         <StatCard
           delay={0.05}
           icon={<Users className="h-5 w-5" />}
