@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+export const dynamic = 'force-dynamic';
+
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -16,8 +18,25 @@ const TYPES = [
   { key: 'special', label: 'Événement spécial' },
 ] as const;
 
-export default function NewServicePage() {
+export default function NewOrEditServicePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="fixed inset-0 flex items-center justify-center bg-ios-bg-light">
+          <div className="h-10 w-10 rounded-full border-[3px] border-brand-200 border-t-brand-600 animate-spin" />
+        </div>
+      }
+    >
+      <ServiceFormContent />
+    </Suspense>
+  );
+}
+
+function ServiceFormContent() {
   const router = useRouter();
+  const search = useSearchParams();
+  const editId = search.get('id');
+  const isEdit = !!editId;
   const { user } = useAuth();
 
   const [type, setType] = useState<'dimanche' | 'midweek' | 'special'>('dimanche');
@@ -28,7 +47,28 @@ export default function NewServicePage() {
     return d.toISOString().slice(0, 16);
   });
   const [saving, setSaving] = useState(false);
-  const [notify, setNotify] = useState(true);
+  const [notify, setNotify] = useState(!isEdit); // pas de notif par défaut en édition
+  const [loadingEdit, setLoadingEdit] = useState(isEdit);
+
+  // Charge le service en mode édition
+  useEffect(() => {
+    if (!editId) return;
+    (async () => {
+      const { data } = await supabase
+        .from('services')
+        .select('*')
+        .eq('id', editId)
+        .maybeSingle();
+      if (data) {
+        setType(data.type as any);
+        setTitle((data.title as string) ?? '');
+        const d = new Date(data.date);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        setDate(d.toISOString().slice(0, 16));
+      }
+      setLoadingEdit(false);
+    })();
+  }, [editId]);
 
   const handleSubmit = async () => {
     if (!user?.church_id) return;
@@ -40,14 +80,26 @@ export default function NewServicePage() {
         title.trim() ||
         (type === 'dimanche' ? 'Culte de dimanche' : type === 'midweek' ? 'Réunion de semaine' : 'Événement');
 
-      const { error } = await supabase.from('services').insert({
-        church_id: user.church_id,
-        type,
-        title: finalTitle,
-        date: new Date(date).toISOString(),
-        created_by: user.id,
-      });
-      if (error) throw error;
+      if (isEdit) {
+        const { error } = await supabase
+          .from('services')
+          .update({
+            type,
+            title: finalTitle,
+            date: new Date(date).toISOString(),
+          })
+          .eq('id', editId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('services').insert({
+          church_id: user.church_id,
+          type,
+          title: finalTitle,
+          date: new Date(date).toISOString(),
+          created_by: user.id,
+        });
+        if (error) throw error;
+      }
 
       if (notify) {
         const { data: members } = await supabase
@@ -59,7 +111,7 @@ export default function NewServicePage() {
         if (ids.length) {
           await supabase.from('notifications').insert(
             ids.map((rid) => ({
-              title: 'Nouveau programme',
+              title: isEdit ? 'Programme modifié' : 'Nouveau programme',
               message: `${finalTitle} — ${new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`,
               type: 'system',
               sender_id: user.id,
@@ -70,7 +122,7 @@ export default function NewServicePage() {
         }
       }
 
-      toast.success('Programme ajouté');
+      toast.success(isEdit ? 'Programme modifié' : 'Programme ajouté');
       router.replace('/admin/services');
     } catch (e: any) {
       toast.error('Échec : ' + e.message);
@@ -79,9 +131,17 @@ export default function NewServicePage() {
     }
   };
 
+  if (loadingEdit) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-ios-bg-light">
+        <div className="h-10 w-10 rounded-full border-[3px] border-brand-200 border-t-brand-600 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div>
-      <NavBar title="Nouveau programme" back />
+      <NavBar title={isEdit ? 'Modifier le programme' : 'Nouveau programme'} back />
 
       <div className="px-4 pt-2 pb-8 space-y-4">
         <div>
@@ -144,7 +204,7 @@ export default function NewServicePage() {
         </button>
 
         <IOSButton fullWidth size="lg" onClick={handleSubmit} isLoading={saving}>
-          Créer le programme
+          {isEdit ? 'Enregistrer' : 'Créer le programme'}
         </IOSButton>
       </div>
     </div>

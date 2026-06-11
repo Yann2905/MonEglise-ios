@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { NavBar } from '@/components/ui/NavBar';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { AudioPlayer } from '@/components/ui/AudioPlayer';
 import { formatDateLong } from '@/lib/utils';
 import type { Sermon } from '@/lib/types';
 
@@ -80,16 +81,9 @@ export default function MemberSermonsPage() {
         {playing?.audio_url && (
           <div className="px-5 pb-8 pt-2">
             {playing.verses && (
-              <p className="text-[14px] text-ios-gray italic mb-3">{playing.verses}</p>
+              <p className="text-[14px] text-ios-gray italic mb-4">{playing.verses}</p>
             )}
-            <audio src={playing.audio_url} controls className="w-full" />
-            <a
-              href={playing.audio_url}
-              download
-              className="mt-3 inline-block text-brand-600 font-semibold text-[14px]"
-            >
-              Télécharger
-            </a>
+            <AudioPlayer src={playing.audio_url} />
           </div>
         )}
       </BottomSheet>

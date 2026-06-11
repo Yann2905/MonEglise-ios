@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Calendar, Trash2 } from 'lucide-react';
+import { Plus, Calendar, Trash2, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -19,6 +19,7 @@ export default function AdminServicesPage() {
   const [items, setItems] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [toDelete, setToDelete] = useState<Service | null>(null);
+  const [actions, setActions] = useState<Service | null>(null);
 
   useEffect(() => {
     if (!user?.church_id) return;
@@ -91,12 +92,45 @@ export default function AdminServicesPage() {
         ) : (
           <>
             {upcoming.length > 0 && (
-              <Section title="À venir" items={upcoming} onDelete={setToDelete} highlight />
+              <Section title="À venir" items={upcoming} onOpen={setActions} highlight />
             )}
-            {past.length > 0 && <Section title="Passés" items={past} onDelete={setToDelete} />}
+            {past.length > 0 && <Section title="Passés" items={past} onOpen={setActions} />}
           </>
         )}
       </div>
+
+      <BottomSheet
+        open={!!actions}
+        onClose={() => setActions(null)}
+        title={actions?.title || actions?.type}
+      >
+        {actions && (
+          <div className="px-5 pb-6 pt-2 space-y-2">
+            <button
+              onClick={() => {
+                const s = actions;
+                setActions(null);
+                router.push(`/admin/services/new?id=${s.id}`);
+              }}
+              className="w-full px-4 py-3.5 rounded-ios-lg bg-brand-50 text-brand-600 font-semibold text-left active:bg-brand-100 flex items-center gap-2"
+            >
+              <Pencil className="h-5 w-5" />
+              Modifier
+            </button>
+            <button
+              onClick={() => {
+                const s = actions;
+                setActions(null);
+                setToDelete(s);
+              }}
+              className="w-full px-4 py-3.5 rounded-ios-lg bg-ios-red/10 text-ios-red font-semibold text-left active:bg-ios-red/20 flex items-center gap-2"
+            >
+              <Trash2 className="h-5 w-5" />
+              Supprimer
+            </button>
+          </div>
+        )}
+      </BottomSheet>
 
       <IOSAlert
         open={!!toDelete}
@@ -115,12 +149,12 @@ export default function AdminServicesPage() {
 function Section({
   title,
   items,
-  onDelete,
+  onOpen,
   highlight,
 }: {
   title: string;
   items: Service[];
-  onDelete: (s: Service) => void;
+  onOpen: (s: Service) => void;
   highlight?: boolean;
 }) {
   return (
@@ -132,16 +166,17 @@ function Section({
         {items.map((s, i) => {
           const d = new Date(s.date);
           return (
-            <div
+            <button
               key={s.id}
+              onClick={() => onOpen(s)}
               className={cn(
-                'px-4 py-3 flex items-center gap-3',
+                'w-full px-4 py-3 flex items-center gap-3 active:bg-ios-gray6 text-left',
                 i < items.length - 1 && 'border-b border-ios-separator/10'
               )}
             >
               <div
                 className={cn(
-                  'flex h-12 w-12 flex-col items-center justify-center rounded-ios',
+                  'flex h-12 w-12 flex-col items-center justify-center rounded-ios flex-shrink-0',
                   highlight ? 'bg-brand-100 text-brand-600' : 'bg-ios-gray5 text-ios-gray'
                 )}
               >
@@ -156,14 +191,8 @@ function Section({
                 </p>
                 <p className="text-[12px] text-ios-gray">{formatDateTime(s.date)}</p>
               </div>
-              <button
-                onClick={() => onDelete(s)}
-                className="p-2 rounded-ios text-ios-red active:bg-ios-red/10"
-                aria-label="Supprimer"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
+              <span className="text-ios-gray3 text-xl">›</span>
+            </button>
           );
         })}
       </div>

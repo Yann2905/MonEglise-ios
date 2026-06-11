@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LogOut, Phone, MapPin, ShieldCheck, Moon, Sun, Pencil } from 'lucide-react';
+import { LogOut, Phone, MapPin, ShieldCheck, Moon, Sun, Pencil, Bell } from 'lucide-react';
+import { subscribePush } from '@/lib/push-notifications';
+import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
 import { AvatarEditor } from '@/components/ui/AvatarEditor';
@@ -51,6 +53,32 @@ export default function MemberProfilePage() {
           {user.admin_code && (
             <Row icon={<ShieldCheck className="h-5 w-5" />} label="Code église" value={user.admin_code} />
           )}
+        </Card>
+
+        <SectionLabel className="mt-6">Notifications</SectionLabel>
+        <Card>
+          <button
+            onClick={async () => {
+              const t = toast.loading('Configuration des notifications…');
+              const r = await subscribePush(user.id);
+              toast.dismiss(t);
+              if (r.ok) toast.success('Notifications activées');
+              else if (r.reason === 'denied') toast.error('Permission refusée');
+              else if (r.reason === 'unsupported') toast.error('Non supporté sur ce navigateur. Installez l\'app sur l\'écran d\'accueil.');
+              else if (r.reason === 'no-vapid') toast.error('Configuration manquante (VAPID).');
+              else toast.error('Erreur : ' + r.reason);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-ios-gray6"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-ios bg-brand-50 text-brand-600">
+              <Bell className="h-5 w-5" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-[16px] font-medium tracking-sf-tight">Activer les notifications</p>
+              <p className="text-[13px] text-ios-gray">Recevoir les alertes même app fermée</p>
+            </div>
+            <span className="text-ios-gray3 text-xl">›</span>
+          </button>
         </Card>
 
         <SectionLabel className="mt-6">Apparence</SectionLabel>
