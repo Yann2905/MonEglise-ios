@@ -1,30 +1,37 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Camera, Trash2 } from 'lucide-react';
+import { Camera, Trash2, Image as ImageIcon, Folder, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { uploadImage, destroyCloudinary } from '@/lib/cloudinary';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { Avatar } from './Avatar';
 import { IOSAlert } from './IOSAlert';
+import { BottomSheet } from './BottomSheet';
 
 interface AvatarEditorProps {
   size?: number;
 }
 
-/** Avatar éditable : tap pour changer la photo */
+/** Avatar éditable : tap pour choisir Galerie / Caméra / Fichiers */
 export function AvatarEditor({ size = 96 }: AvatarEditorProps) {
   const { user, updateLocalAvatar } = useAuth();
+
+  const galleryRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
   const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   if (!user) return null;
 
-  const triggerPick = () => fileRef.current?.click();
+  const openPicker = () => setSheetOpen(true);
 
   const handleFile = async (file: File) => {
+    setSheetOpen(false);
     if (!file.type.startsWith('image/')) {
       toast.error('Sélectionnez une image');
       return;
@@ -46,7 +53,6 @@ export function AvatarEditor({ size = 96 }: AvatarEditorProps) {
       if (error) throw error;
 
       updateLocalAvatar(url, publicId);
-      // Supprime l'ancienne (best-effort)
       if (oldPublicId) destroyCloudinary(oldPublicId);
       toast.success('Photo mise à jour');
     } catch (e: any) {
@@ -85,7 +91,7 @@ export function AvatarEditor({ size = 96 }: AvatarEditorProps) {
         )}
         {!uploading && (
           <button
-            onClick={triggerPick}
+            onClick={openPicker}
             className="absolute -bottom-1 -right-1 h-9 w-9 rounded-full bg-brand-600 flex items-center justify-center shadow-ios-lg active:scale-95 transition-transform"
             aria-label="Changer la photo"
           >
@@ -103,8 +109,20 @@ export function AvatarEditor({ size = 96 }: AvatarEditorProps) {
         )}
       </div>
 
+      {/* Inputs cachés : un par source */}
       <input
-        ref={fileRef}
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+          if (galleryRef.current) galleryRef.current.value = '';
+        }}
+      />
+      <input
+        ref={cameraRef}
         type="file"
         accept="image/*"
         capture="user"
@@ -112,9 +130,55 @@ export function AvatarEditor({ size = 96 }: AvatarEditorProps) {
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) handleFile(f);
+          if (cameraRef.current) cameraRef.current.value = '';
+        }}
+      />
+      <input
+        ref={fileRef}
+        type="file"
+        accept="*/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
           if (fileRef.current) fileRef.current.value = '';
         }}
       />
+
+      {/* Action sheet : choix de la source */}
+      <BottomSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        title="Choisir une photo"
+      >
+        <div className="px-5 pb-6 pt-2 space-y-2">
+          <SheetButton
+            icon={<ImageIcon className="h-5 w-5" />}
+            label="Photothèque"
+            description="Choisir depuis vos photos"
+            onClick={() => galleryRef.current?.click()}
+          />
+          <SheetButton
+            icon={<Camera className="h-5 w-5" />}
+            label="Prendre une photo"
+            description="Ouvrir l'appareil photo"
+            onClick={() => cameraRef.current?.click()}
+          />
+          <SheetButton
+            icon={<Folder className="h-5 w-5" />}
+            label="Parcourir les fichiers"
+            description="Sélectionner depuis Fichiers"
+            onClick={() => fileRef.current?.click()}
+          />
+          <button
+            onClick={() => setSheetOpen(false)}
+            className="w-full mt-2 px-4 py-3.5 rounded-ios-lg bg-ios-gray6 text-ios-label-light font-semibold active:bg-ios-gray5 flex items-center justify-center gap-2"
+          >
+            <X className="h-5 w-5" />
+            Annuler
+          </button>
+        </div>
+      </BottomSheet>
 
       <IOSAlert
         open={confirmDelete}
@@ -127,5 +191,32 @@ export function AvatarEditor({ size = 96 }: AvatarEditorProps) {
         ]}
       />
     </>
+  );
+}
+
+function SheetButton({
+  icon,
+  label,
+  description,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full px-4 py-3.5 rounded-ios-lg bg-brand-50 text-left active:bg-brand-100 flex items-center gap-3"
+    >
+      <div className="flex h-10 w-10 items-center justify-center rounded-ios bg-white text-brand-600 shadow-ios-sm">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[15px] font-semibold text-brand-600">{label}</p>
+        <p className="text-[12px] text-ios-gray">{description}</p>
+      </div>
+    </button>
   );
 }
