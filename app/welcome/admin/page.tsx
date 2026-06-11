@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -22,10 +24,11 @@ export default function AdminWelcomePage() {
       .then(({ data }) => setChurchName((data?.name as string) ?? ''));
   }, [user]);
 
-  if (!user) {
-    router.replace('/');
-    return null;
-  }
+  useEffect(() => {
+    if (!user) router.replace('/');
+  }, [user, router]);
+
+  if (!user) return null;
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden">
