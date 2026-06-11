@@ -14,6 +14,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 import { IOSAlert } from '@/components/ui/IOSAlert';
 import { labelOfChurchRole, cn } from '@/lib/utils';
 import type { Family, User } from '@/lib/types';
+import { notify } from '@/lib/notifications';
 
 export default function FamilyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -84,26 +85,67 @@ export default function FamilyDetailPage() {
 
   const addMember = async (uid: string) => {
     const { error } = await supabase.from('family_members').insert({ family_id: id, user_id: uid });
-    if (error) toast.error(error.message);
-    else toast.success('Membre ajouté');
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Membre ajouté');
+      if (user && family) {
+        await notify({
+          recipients: [uid],
+          title: 'Nouvelle famille',
+          message: `Vous avez été ajouté à "${family.name}".`,
+          type: 'system',
+          senderId: user.id,
+          actorName: `${user.first_name} ${user.last_name}`,
+        });
+      }
+    }
   };
 
   const removeMember = async () => {
     if (!showConfirmRemove) return;
+    const removedUserId = showConfirmRemove.u.id;
+    const removedUserName = `${showConfirmRemove.u.first_name} ${showConfirmRemove.u.last_name}`;
     const { error } = await supabase
       .from('family_members')
       .delete()
       .eq('family_id', id)
-      .eq('user_id', showConfirmRemove.u.id);
-    if (error) toast.error(error.message);
-    else toast.success('Membre retiré');
+      .eq('user_id', removedUserId);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Membre retiré');
+      if (user && family) {
+        await notify({
+          recipients: [removedUserId],
+          title: 'Retrait de famille',
+          message: `Vous avez été retiré de "${family.name}".`,
+          type: 'system',
+          senderId: user.id,
+          actorName: `${user.first_name} ${user.last_name}`,
+        });
+      }
+    }
     setShowConfirmRemove(null);
   };
 
   const setResponsible = async (uid: string) => {
     const { error } = await supabase.from('families').update({ responsible_id: uid }).eq('id', id);
-    if (error) toast.error(error.message);
-    else toast.success('Responsable mis à jour');
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Responsable mis à jour');
+      if (user && family) {
+        await notify({
+          recipients: [uid],
+          title: 'Nouveau responsable',
+          message: `Vous êtes désigné responsable de "${family.name}".`,
+          type: 'system',
+          senderId: user.id,
+          actorName: `${user.first_name} ${user.last_name}`,
+        });
+      }
+    }
     setSelectedMember(null);
   };
 

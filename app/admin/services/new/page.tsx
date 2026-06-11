@@ -11,6 +11,7 @@ import { NavBar } from '@/components/ui/NavBar';
 import { IOSButton } from '@/components/ui/IOSButton';
 import { IOSTextField } from '@/components/ui/IOSTextField';
 import { cn } from '@/lib/utils';
+import { notify as sendNotif, allChurchMemberIds } from '@/lib/notifications';
 
 const TYPES = [
   { key: 'dimanche', label: 'Culte de dimanche' },
@@ -102,23 +103,16 @@ function ServiceFormContent() {
       }
 
       if (notify) {
-        const { data: members } = await supabase
-          .from('users')
-          .select('id')
-          .eq('church_id', user.church_id)
-          .neq('id', user.id);
-        const ids = (members as { id: string }[] | null)?.map((m) => m.id) ?? [];
+        const ids = await allChurchMemberIds(user.church_id, user.id);
         if (ids.length) {
-          await supabase.from('notifications').insert(
-            ids.map((rid) => ({
-              title: isEdit ? 'Programme modifié' : 'Nouveau programme',
-              message: `${finalTitle} — ${new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`,
-              type: 'system',
-              sender_id: user.id,
-              receiver_id: rid,
-              is_read: false,
-            }))
-          );
+          await sendNotif({
+            recipients: ids,
+            title: isEdit ? 'Programme modifié' : 'Nouveau programme',
+            message: `${finalTitle} — ${new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`,
+            type: 'system',
+            senderId: user.id,
+            actorName: `${user.first_name} ${user.last_name}`,
+          });
         }
       }
 

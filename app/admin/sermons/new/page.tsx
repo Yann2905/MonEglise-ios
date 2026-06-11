@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { NavBar } from '@/components/ui/NavBar';
 import { IOSButton } from '@/components/ui/IOSButton';
 import { IOSTextField } from '@/components/ui/IOSTextField';
+import { notify, allChurchMemberIds } from '@/lib/notifications';
 
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!;
 const AUDIO_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_AUDIO_PRESET!;
@@ -79,27 +80,20 @@ export default function NewSermonPage() {
       });
       if (error) throw error;
 
-      // Notifier les membres
+      // Notifier les membres (DB + push)
       try {
-        const { data: members } = await supabase
-          .from('users')
-          .select('id')
-          .eq('church_id', user.church_id)
-          .neq('id', user.id);
-        const ids = (members as { id: string }[] | null)?.map((m) => m.id) ?? [];
+        const ids = await allChurchMemberIds(user.church_id, user.id);
         if (ids.length) {
-          await supabase.from('notifications').insert(
-            ids.map((rid) => ({
-              title: 'MonÉglise',
-              message: audioUrl
-                ? `La prédication "${theme}" est disponible.`
-                : `Une nouvelle prédication "${theme}" a été ajoutée.`,
-              type: 'system',
-              sender_id: user.id,
-              receiver_id: rid,
-              is_read: false,
-            }))
-          );
+          await notify({
+            recipients: ids,
+            title: 'Nouvelle prédication',
+            message: audioUrl
+              ? `"${theme}" est disponible.`
+              : `Une nouvelle prédication "${theme}" a été ajoutée.`,
+            type: 'sermon',
+            senderId: user.id,
+            actorName: `${user.first_name} ${user.last_name}`,
+          });
         }
       } catch {}
 

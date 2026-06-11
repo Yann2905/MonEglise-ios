@@ -12,6 +12,7 @@ import { IOSTextField } from '@/components/ui/IOSTextField';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { formatDateTime, cn } from '@/lib/utils';
 import type { Notification, Family } from '@/lib/types';
+import { notify } from '@/lib/notifications';
 
 export default function AdminNotificationsPage() {
   const router = useRouter();
@@ -92,28 +93,14 @@ export default function AdminNotificationsPage() {
         return;
       }
 
-      const rows = Array.from(recipients).map((rid) => ({
+      await notify({
+        recipients: Array.from(recipients),
         title: title.trim(),
         message: message.trim(),
         type: 'custom',
-        sender_id: user.id,
-        receiver_id: rid,
-        is_read: false,
-      }));
-      const { error } = await supabase.from('notifications').insert(rows);
-      if (error) throw error;
-
-      // Edge function push (best-effort)
-      try {
-        await supabase.functions.invoke('send-push', {
-          body: {
-            title: title.trim(),
-            message: message.trim(),
-            user_ids: Array.from(recipients),
-            data: { type: 'custom' },
-          },
-        });
-      } catch {}
+        senderId: user.id,
+        actorName: `${user.first_name} ${user.last_name}`,
+      });
 
       toast.success(`Envoyée à ${recipients.size} membre${recipients.size > 1 ? 's' : ''}`);
       setTitle('');

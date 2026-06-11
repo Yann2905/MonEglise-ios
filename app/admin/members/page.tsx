@@ -12,6 +12,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 import { IOSAlert } from '@/components/ui/IOSAlert';
 import { CHURCH_ROLE_LABELS, labelOfChurchRole, cn } from '@/lib/utils';
 import type { User } from '@/lib/types';
+import { notify } from '@/lib/notifications';
 
 export default function AdminMembersPage() {
   const router = useRouter();
@@ -68,8 +69,22 @@ export default function AdminMembersPage() {
       .from('users')
       .update({ church_role: newRole, updated_at: new Date().toISOString() })
       .eq('id', memberId);
-    if (error) toast.error(error.message);
-    else toast.success('Rôle modifié');
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Rôle modifié');
+      // Notif au membre concerné
+      if (user) {
+        await notify({
+          recipients: [memberId],
+          title: 'Votre rôle a changé',
+          message: `Vous êtes maintenant ${labelOfChurchRole(newRole)}.`,
+          type: 'system',
+          senderId: user.id,
+          actorName: `${user.first_name} ${user.last_name}`,
+        });
+      }
+    }
     setSelectedMember(null);
   };
 

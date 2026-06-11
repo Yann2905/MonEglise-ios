@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { NavBar } from '@/components/ui/NavBar';
 import { IOSButton } from '@/components/ui/IOSButton';
 import { Avatar } from '@/components/ui/Avatar';
+import { notify } from '@/lib/notifications';
 import { cn, labelOfChurchRole } from '@/lib/utils';
 import type { Family, User } from '@/lib/types';
 
@@ -126,7 +127,7 @@ export default function MemberAttendancePage() {
         .single();
       const absenceId = absRow?.id as string | undefined;
 
-      // Notifie l'admin avec metadata.absence_id pour permettre la navigation
+      // Notifie l'admin (DB + push) avec metadata.absence_id pour navigation
       try {
         const { data: church } = await supabase
           .from('churches')
@@ -134,15 +135,14 @@ export default function MemberAttendancePage() {
           .eq('id', user.church_id)
           .maybeSingle();
         if (church?.admin_id && church.admin_id !== user.id) {
-          await supabase.from('notifications').insert({
+          await notify({
+            recipients: [church.admin_id],
             title: `Appel : ${selectedFamily.name}`,
             message: `${user.first_name} ${user.last_name} a enregistré ${absentList.length} absent${absentList.length > 1 ? 's' : ''} sur ${members.length}`,
             type: 'absence',
-            sender_id: user.id,
-            receiver_id: church.admin_id,
-            actor_name: `${user.first_name} ${user.last_name}`,
-            is_read: false,
-            metadata: absenceId ? { absence_id: absenceId } : null,
+            senderId: user.id,
+            actorName: `${user.first_name} ${user.last_name}`,
+            metadata: absenceId ? { absence_id: absenceId } : undefined,
           });
         }
       } catch {}
