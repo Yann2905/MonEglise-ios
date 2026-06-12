@@ -100,9 +100,9 @@ export default function MemberDashboard() {
 
   return (
     <div>
-      {/* Header style Android — compact, horizontal */}
-      <div className="pt-safe">
-        <div className="px-5 pt-3 pb-2">
+      {/* Header bleu compact (bg = couleur du tab actif) */}
+      <div className="bg-brand-600 pt-safe rounded-b-[28px] shadow-ios-lg">
+        <div className="px-5 pt-3 pb-5">
           <div className="flex items-center gap-3">
             <button onClick={() => router.push('/member/profile')} className="active:opacity-70 flex-shrink-0">
               <Avatar
@@ -110,24 +110,25 @@ export default function MemberDashboard() {
                 lastName={user.last_name}
                 src={user.avatar_url}
                 size={44}
+                className="ring-2 ring-white/40"
               />
             </button>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-ios-gray leading-tight">Bonjour,</p>
-              <p className="text-[16px] font-bold tracking-sf-tight truncate text-ios-label-light">
+              <p className="text-[13px] text-white/75 leading-tight">Bonjour,</p>
+              <p className="text-[16px] font-bold tracking-sf-tight truncate text-white">
                 {user.first_name} 👋
               </p>
             </div>
             {churchName && (
-              <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-ios bg-brand-500/15">
-                <Building2 className="h-3 w-3 text-brand-600 flex-shrink-0" />
-                <span className="text-[11px] font-semibold text-brand-600 max-w-[100px] truncate">
+              <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-ios bg-white/15 backdrop-blur-sm">
+                <Building2 className="h-3 w-3 text-white flex-shrink-0" />
+                <span className="text-[11px] font-semibold text-white max-w-[100px] truncate">
                   {churchName}
                 </span>
               </div>
             )}
           </div>
-          <p className="mt-3 text-[12px] text-ios-gray capitalize">{todayLabel}</p>
+          <p className="mt-3 text-[12px] text-white/75 capitalize">{todayLabel}</p>
         </div>
       </div>
 
