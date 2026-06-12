@@ -73,16 +73,16 @@ export function DailyVerse() {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4, duration: 0.5 }}
-      className="mx-4 mt-5 rounded-ios-xl bg-gradient-to-br from-amber-50 to-orange-50 p-5 shadow-ios-sm"
+      className="daily-verse-card mx-4 mt-5 rounded-ios-xl p-5 shadow-ios-sm"
     >
       <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-ios bg-white/80 flex items-center justify-center text-ios-orange flex-shrink-0">
+        <div className="daily-verse-icon h-10 w-10 rounded-ios flex items-center justify-center flex-shrink-0">
           <BookOpen className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-bold tracking-[1.5px] text-ios-orange uppercase">Verset du jour</p>
           <p
-            className="mt-2 text-[16px] leading-relaxed text-ios-label-light italic"
+            className="daily-verse-text mt-2 leading-relaxed italic"
             style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: 17 }}
           >
             « {verse.text} »
@@ -90,7 +90,7 @@ export function DailyVerse() {
           <p className="mt-2 text-[13px] font-semibold text-ios-orange">— {verse.reference}</p>
           <button
             onClick={share}
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-ios-orange text-[12px] font-semibold shadow-ios-sm active:opacity-70"
+            className="daily-verse-share mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-ios-orange text-[12px] font-semibold shadow-ios-sm active:opacity-70"
           >
             <Share2 className="h-3.5 w-3.5" />
             Partager

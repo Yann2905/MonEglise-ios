@@ -172,6 +172,35 @@
     font-size: 13px;
     letter-spacing: -0.005em;
   }
+
+  /* ─── Daily verse card (light + dark) ─── */
+  .daily-verse-card {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FFEDD5 100%);
+  }
+  .daily-verse-icon {
+    background: rgba(255, 255, 255, 0.8);
+    color: #FF9500;
+  }
+  .daily-verse-text {
+    color: #1A1A1A;
+  }
+  .daily-verse-share {
+    background: #FFFFFF;
+  }
+
+  /* Variante sombre : fond marron foncé + texte clair */
+  html.dark .daily-verse-card {
+    background: linear-gradient(135deg, #2A1F0E 0%, #3A2811 100%) !important;
+  }
+  html.dark .daily-verse-icon {
+    background: rgba(255, 149, 0, 0.15);
+  }
+  html.dark .daily-verse-text {
+    color: #F5E6D3 !important;
+  }
+  html.dark .daily-verse-share {
+    background: rgba(255, 255, 255, 0.1) !important;
+  }
 }
 
 /* ────────────────────────────────────────────────────────────
