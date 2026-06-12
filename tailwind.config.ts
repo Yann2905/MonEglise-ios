@@ -37,11 +37,41 @@ const config: Config = {
           200: '#A8C2E8',
           300: '#7AA1DB',
           400: '#4D80CD',
-          500: '#3D7CC9', // bleu accent
-          600: '#234A87', // bleu marine principal
+          500: '#3D7CC9',
+          600: '#234A87',
           700: '#1A3866',
           800: '#122546',
           900: '#0A1325',
+        },
+        // ─── Accent vert (calmant, spirituel) ────────────
+        emerald: {
+          50: '#ECF7F2',
+          100: '#CFEBDD',
+          200: '#9FD7BB',
+          300: '#5FBA8F',
+          400: '#2E9970',
+          500: '#147958',
+          600: '#0E5F47',  // accent principal vert
+          700: '#0A4A37',
+          800: '#073A2B',
+          900: '#042519',
+        },
+        // ─── Or chaud (anniversaire, célébration) ──────────
+        gold: {
+          50: '#FAF5E9',
+          100: '#F2E5C2',
+          200: '#E4CC8A',
+          300: '#D4AF50',
+          400: '#C9A961',
+          500: '#B0902F',
+          600: '#8C7022',
+          700: '#6B541A',
+        },
+        // ─── Forêt (sage, naturel) ────────────────────
+        forest: {
+          400: '#3D6B5C',
+          500: '#2A4F44',
+          600: '#1F3A33',
         },
         // ─── Système iOS 18 ────────────────────────────────
         ios: {

@@ -84,33 +84,45 @@ export default function AdminDashboard() {
 
   if (!user) return null;
 
+  const todayLabel = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+
   return (
     <div className="min-h-[100dvh]">
-      {/* Header avec gradient — déborde + rounded bottom pour l'effet "bulle" */}
-      <div className="relative pt-safe overflow-hidden rounded-b-[36px]">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500" />
-        <div className="absolute -top-10 -left-10 h-60 w-60 rounded-full bg-brand-400/30 blur-3xl" />
-        <div className="absolute -bottom-10 -right-10 h-60 w-60 rounded-full bg-brand-800/40 blur-3xl" />
-
-        <div className="relative px-5 pt-4 pb-7">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-white/80 text-[13px] font-medium tracking-wide uppercase">Pasteur principal</p>
-              <h1 className="mt-1 text-white text-[28px] font-bold tracking-sf-tighter">
-                {user.first_name} {user.last_name}
-              </h1>
-              <p className="mt-0.5 text-white/90 text-[15px] tracking-sf-tight">{churchName}</p>
-            </div>
+      {/* Header style magazine — fond clair, titre serif, accent doré */}
+      <div className="pt-safe">
+        <div className="px-5 pt-3">
+          <div className="flex items-center justify-between mb-5">
             <button onClick={() => router.push('/admin/profile')} className="active:opacity-70">
               <Avatar
                 firstName={user.first_name}
                 lastName={user.last_name}
                 src={user.avatar_url}
-                size={56}
-                className="ring-2 ring-white/50"
+                size={42}
               />
             </button>
+            <span className="text-[12px] font-semibold uppercase tracking-[1.5px] text-ios-gray">
+              {todayLabel}
+            </span>
           </div>
+
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[2.5px] text-gold-500">
+              Pasteur · {churchName || 'MonÉglise'}
+            </p>
+            <h1
+              className="mt-2 text-[42px] leading-[1.05] font-semibold text-ios-label-light"
+              style={{ fontFamily: '"Cormorant Garamond", serif', letterSpacing: '-0.02em' }}
+            >
+              {user.first_name}<br />
+              {user.last_name}.
+            </h1>
+          </div>
+
+          <div className="mt-5 h-[2px] w-12 bg-gold-400 rounded-full" />
         </div>
       </div>
 
