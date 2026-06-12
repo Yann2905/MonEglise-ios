@@ -18,11 +18,7 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
-    /* On garde overscroll-behavior pour éviter le rebond horizontal,
-       mais on autorise le scroll vertical normal */
     overscroll-behavior-x: none;
-    overscroll-behavior-y: auto;
-    height: 100%;
   }
 
   body {
@@ -31,9 +27,8 @@
       Inter, system-ui, sans-serif;
     letter-spacing: -0.015em;
     overflow-x: hidden;
-    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    min-height: 100%;
+    /* Pas de overflow-y / height fixes : le document scroll naturellement */
   }
 
   /* ─── Mode sombre via .dark sur <html> (toggle manuel) ─── */
