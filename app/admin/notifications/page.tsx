@@ -303,7 +303,7 @@ function SendForm({
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Votre message…"
           rows={5}
-          className="w-full bg-ios-gray6 rounded-ios-lg p-4 outline-none text-[16px] tracking-sf-tight resize-none focus:bg-white focus:ring-2 focus:ring-brand-500/40"
+          className="w-full bg-white text-ios-label-light rounded-ios-lg p-4 outline-none text-[17px] resize-none border border-ios-gray5 placeholder:text-ios-gray2 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 tracking-sf-tight"
         />
       </div>
       <div>
