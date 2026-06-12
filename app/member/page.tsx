@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Calendar, BookOpen, MessageCircle, UsersRound, Headphones, ClipboardCheck } from 'lucide-react';
+import { Calendar, BookOpen, MessageCircle, UsersRound, Headphones, ClipboardCheck, Building2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Avatar } from '@/components/ui/Avatar';
@@ -100,43 +100,34 @@ export default function MemberDashboard() {
 
   return (
     <div>
-      {/* Header style magazine — fond clair, titre serif, accent doré */}
+      {/* Header style Android — compact, horizontal */}
       <div className="pt-safe">
-        <div className="px-5 pt-3">
-          {/* Top row : avatar + date */}
-          <div className="flex items-center justify-between mb-5">
-            <button onClick={() => router.push('/member/profile')} className="active:opacity-70">
+        <div className="px-5 pt-3 pb-2">
+          <div className="flex items-center gap-3">
+            <button onClick={() => router.push('/member/profile')} className="active:opacity-70 flex-shrink-0">
               <Avatar
                 firstName={user.first_name}
                 lastName={user.last_name}
                 src={user.avatar_url}
-                size={42}
+                size={44}
               />
             </button>
-            <span className="text-[12px] font-semibold uppercase tracking-[1.5px] text-ios-gray">
-              {todayLabel}
-            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] text-ios-gray leading-tight">Bonjour,</p>
+              <p className="text-[16px] font-bold tracking-sf-tight truncate text-ios-label-light">
+                {user.first_name} 👋
+              </p>
+            </div>
+            {churchName && (
+              <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-ios bg-brand-500/15">
+                <Building2 className="h-3 w-3 text-brand-600 flex-shrink-0" />
+                <span className="text-[11px] font-semibold text-brand-600 max-w-[100px] truncate">
+                  {churchName}
+                </span>
+              </div>
+            )}
           </div>
-
-          {/* Hello + church */}
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[2.5px] text-gold-500">
-              {churchName || 'MonÉglise'}
-            </p>
-            <h1
-              className="mt-2 text-[42px] leading-[1.05] font-semibold text-ios-label-light"
-              style={{ fontFamily: '"Cormorant Garamond", serif', letterSpacing: '-0.02em' }}
-            >
-              Bonjour,<br />
-              {user.first_name}.
-            </h1>
-            <p className="mt-3 text-[14px] text-ios-gray italic" style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: 16 }}>
-              « Que la paix de Dieu soit avec toi. »
-            </p>
-          </div>
-
-          {/* Divider doré */}
-          <div className="mt-5 h-[2px] w-12 bg-gold-400 rounded-full" />
+          <p className="mt-3 text-[12px] text-ios-gray capitalize">{todayLabel}</p>
         </div>
       </div>
 
