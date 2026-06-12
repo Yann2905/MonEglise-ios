@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, ChevronRight, Star, UsersRound, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Plus, ChevronRight, Star, UsersRound, MoreHorizontal, Pencil, Trash2, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +13,7 @@ import { IOSButton } from '@/components/ui/IOSButton';
 import { IOSTextField } from '@/components/ui/IOSTextField';
 import { cn } from '@/lib/utils';
 import type { Family } from '@/lib/types';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminFamiliesPage() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function AdminFamiliesPage() {
   const [renameFamily, setRenameFamily] = useState<Family | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [renaming, setRenaming] = useState(false);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (!user?.church_id) return;
@@ -112,9 +114,21 @@ export default function AdminFamiliesPage() {
       />
 
       <div className="px-4">
+        {!loading && families.length > 3 && (
+          <div className="relative mb-2">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-ios-gray" />
+            <input
+              type="search"
+              placeholder="Rechercher une famille…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-11 pl-11 pr-4 rounded-ios-lg bg-ios-gray5 text-[16px] outline-none placeholder:text-ios-gray"
+            />
+          </div>
+        )}
         {loading ? (
-          <div className="flex justify-center py-10">
-            <div className="h-8 w-8 rounded-full border-[3px] border-brand-200 border-t-brand-600 animate-spin" />
+          <div className="mt-2">
+            <ListSkeleton count={5} />
           </div>
         ) : families.length === 0 ? (
           <div className="text-center py-16">
@@ -129,12 +143,14 @@ export default function AdminFamiliesPage() {
           </div>
         ) : (
           <div className="mt-2 bg-white rounded-ios-lg overflow-hidden shadow-ios-sm">
-            {families.map((f, i) => (
+            {families
+              .filter((f) => !search || f.name.toLowerCase().includes(search.toLowerCase()))
+              .map((f, i, arr) => (
               <div
                 key={f.id}
                 className={cn(
                   'w-full flex items-center active:bg-ios-gray6 transition-colors',
-                  i < families.length - 1 && 'border-b border-ios-separator/10'
+                  i < arr.length - 1 && 'border-b border-ios-separator/10'
                 )}
               >
                 <button

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Users, UsersRound, BellRing, Calendar, Headphones } from 'lucide-react';
+import { Users, UsersRound, BellRing, Calendar, Headphones, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Avatar } from '@/components/ui/Avatar';
@@ -199,6 +199,13 @@ export default function AdminDashboard() {
           className="w-full h-14 rounded-ios-lg bg-white shadow-ios-sm text-brand-600 font-semibold text-[15px] flex items-center justify-between px-5 active:bg-ios-gray6"
         >
           <span className="flex items-center gap-2"><Calendar className="h-5 w-5" /> Programmes & cultes</span>
+          <span className="text-ios-gray3">›</span>
+        </button>
+        <button
+          onClick={() => router.push('/admin/stats')}
+          className="w-full h-14 rounded-ios-lg bg-white shadow-ios-sm text-brand-600 font-semibold text-[15px] flex items-center justify-between px-5 active:bg-ios-gray6"
+        >
+          <span className="flex items-center gap-2"><TrendingUp className="h-5 w-5" /> Statistiques</span>
           <span className="text-ios-gray3">›</span>
         </button>
         <button

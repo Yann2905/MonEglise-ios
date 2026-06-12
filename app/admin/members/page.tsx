@@ -13,12 +13,14 @@ import { IOSAlert } from '@/components/ui/IOSAlert';
 import { CHURCH_ROLE_LABELS, labelOfChurchRole, cn } from '@/lib/utils';
 import type { User } from '@/lib/types';
 import { notify } from '@/lib/notifications';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminMembersPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [members, setMembers] = useState<User[]>([]);
   const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState<User | null>(null);
   const [showDelete, setShowDelete] = useState<User | null>(null);
@@ -54,6 +56,7 @@ export default function AdminMembersPage() {
   }, [user]);
 
   const filtered = members.filter((m) => {
+    if (roleFilter && m.church_role !== roleFilter) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -113,13 +116,25 @@ export default function AdminMembersPage() {
           />
         </div>
 
-        <p className="mt-4 px-1 text-[13px] text-ios-gray">
+        {/* Chips de filtre par rôle */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide mt-3 -mx-4 px-4">
+          <FilterChip active={roleFilter === null} onClick={() => setRoleFilter(null)}>
+            Tous
+          </FilterChip>
+          {Object.entries(CHURCH_ROLE_LABELS).map(([k, label]) => (
+            <FilterChip key={k} active={roleFilter === k} onClick={() => setRoleFilter(k)}>
+              {label}
+            </FilterChip>
+          ))}
+        </div>
+
+        <p className="mt-3 px-1 text-[13px] text-ios-gray">
           {filtered.length} membre{filtered.length > 1 ? 's' : ''}
         </p>
 
         {loading ? (
-          <div className="flex justify-center py-10">
-            <div className="h-8 w-8 rounded-full border-[3px] border-brand-200 border-t-brand-600 animate-spin" />
+          <div className="mt-2">
+            <ListSkeleton count={6} />
           </div>
         ) : filtered.length === 0 ? (
           <p className="text-center text-ios-gray mt-10">Aucun membre trouvé</p>
@@ -239,5 +254,27 @@ export default function AdminMembersPage() {
         ]}
       />
     </div>
+  );
+}
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-colors',
+        active ? 'bg-brand-600 text-white' : 'bg-ios-gray5 text-ios-label-light'
+      )}
+    >
+      {children}
+    </button>
   );
 }

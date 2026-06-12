@@ -7,6 +7,7 @@ import { Calendar, BookOpen, MessageCircle, UsersRound, Headphones, ClipboardChe
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Avatar } from '@/components/ui/Avatar';
+import { DailyVerse } from '@/components/ui/DailyVerse';
 import { cn, formatDateLong } from '@/lib/utils';
 
 export default function MemberDashboard() {
@@ -170,6 +171,9 @@ export default function MemberDashboard() {
           onClick={() => router.push('/member/families')}
         />
       </div>
+
+      {/* Verset du jour */}
+      <DailyVerse />
 
       {/* Carte "Faire l'appel" pour les responsables */}
       {isResponsible && (

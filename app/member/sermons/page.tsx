@@ -83,7 +83,7 @@ export default function MemberSermonsPage() {
             {playing.verses && (
               <p className="text-[14px] text-ios-gray italic mb-4">{playing.verses}</p>
             )}
-            <AudioPlayer src={playing.audio_url} />
+            <AudioPlayer src={playing.audio_url} title={playing.theme} />
           </div>
         )}
       </BottomSheet>

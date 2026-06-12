@@ -143,7 +143,14 @@ export default function AdminProfilePage() {
           Se déconnecter
         </button>
 
-        <p className="mt-6 mb-32 text-center text-[12px] text-ios-gray">MonÉglise — v1.0</p>
+        <button
+          onClick={() => router.push('/legal')}
+          className="mt-4 w-full text-center text-[13px] text-brand-600 font-medium active:opacity-60"
+        >
+          CGU & Confidentialité
+        </button>
+
+        <p className="mt-3 mb-32 text-center text-[12px] text-ios-gray">MonÉglise — v1.0</p>
       </div>
 
       <IOSAlert

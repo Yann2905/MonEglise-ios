@@ -1,19 +1,21 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Gauge, Download } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Gauge, Download, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AudioPlayerProps {
   src: string;
   title?: string;
+  artist?: string;
   downloadable?: boolean;
+  shareable?: boolean;
 }
 
 const SPEEDS = [1, 1.25, 1.5, 2];
 
 /** Lecteur audio premium : play/pause, skip ±10s, scrubber, vitesse */
-export function AudioPlayer({ src, title, downloadable = true }: AudioPlayerProps) {
+export function AudioPlayer({ src, title, artist, downloadable = true, shareable = true }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -39,6 +41,29 @@ export function AudioPlayer({ src, title, downloadable = true }: AudioPlayerProp
       a.removeEventListener('ended', onEnd);
     };
   }, []);
+
+  // MediaSession API : permet à l'audio de continuer en arrière-plan
+  // et affiche les contrôles dans le lock screen iOS / notification Android
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
+    const a = audioRef.current;
+    if (!a) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: title || 'Prédication',
+      artist: artist || 'MonÉglise',
+      artwork: [
+        { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { src: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      ],
+    });
+
+    navigator.mediaSession.setActionHandler('play', () => a.play().then(() => setPlaying(true)).catch(() => {}));
+    navigator.mediaSession.setActionHandler('pause', () => { a.pause(); setPlaying(false); });
+    navigator.mediaSession.setActionHandler('seekbackward', () => { a.currentTime = Math.max(0, a.currentTime - 10); });
+    navigator.mediaSession.setActionHandler('seekforward', () => { a.currentTime = Math.min(duration, a.currentTime + 10); });
+    navigator.mediaSession.setActionHandler('seekto', (d: any) => { if (typeof d.seekTime === 'number') a.currentTime = d.seekTime; });
+  }, [title, artist, duration]);
 
   const toggle = async () => {
     const a = audioRef.current;
@@ -173,16 +198,34 @@ export function AudioPlayer({ src, title, downloadable = true }: AudioPlayerProp
           {speed}×
         </button>
 
-        {downloadable && (
-          <a
-            href={src}
-            download
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold bg-ios-gray6 text-brand-600 active:opacity-70"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Télécharger
-          </a>
-        )}
+        <div className="flex gap-2">
+          {shareable && (
+            <button
+              onClick={() => {
+                const shareText = `${title ? `🎙️ ${title}\n` : '🎙️ Prédication\n'}${src}\n\nVia MonÉglise`;
+                if ((navigator as any).share) {
+                  (navigator as any).share({ text: shareText, url: src }).catch(() => {});
+                } else {
+                  window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold bg-ios-gray6 text-brand-600 active:opacity-70"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Partager
+            </button>
+          )}
+          {downloadable && (
+            <a
+              href={src}
+              download
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold bg-ios-gray6 text-brand-600 active:opacity-70"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Télécharger
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
