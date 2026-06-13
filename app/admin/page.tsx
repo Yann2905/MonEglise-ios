@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Users, UsersRound, BellRing, Calendar, Headphones, TrendingUp, Building2 } from 'lucide-react';
+import { Users, UsersRound, BellRing, Calendar, Headphones, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
-import { Avatar } from '@/components/ui/Avatar';
+import { DashboardHeader } from '@/components/ui/DashboardHeader';
 import { cn } from '@/lib/utils';
 
 interface Stats {
@@ -84,45 +84,18 @@ export default function AdminDashboard() {
 
   if (!user) return null;
 
-  const todayLabel = new Date().toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
-
   return (
     <div className="min-h-[100dvh]">
-      {/* Header bleu compact (bg = couleur du tab actif) */}
-      <div className="bg-brand-600 pt-safe rounded-b-[28px] shadow-ios-lg">
-        <div className="px-5 pt-3 pb-5">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push('/admin/profile')} className="active:opacity-70 flex-shrink-0">
-              <Avatar
-                firstName={user.first_name}
-                lastName={user.last_name}
-                src={user.avatar_url}
-                size={44}
-                className="ring-2 ring-white/40"
-              />
-            </button>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-white/75 leading-tight">Bonjour,</p>
-              <p className="text-[16px] font-bold tracking-sf-tight truncate text-white">
-                Pasteur {user.first_name} 👋
-              </p>
-            </div>
-            {churchName && (
-              <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-ios bg-white/15 backdrop-blur-sm">
-                <Building2 className="h-3 w-3 text-white flex-shrink-0" />
-                <span className="text-[11px] font-semibold text-white max-w-[100px] truncate">
-                  {churchName}
-                </span>
-              </div>
-            )}
-          </div>
-          <p className="mt-3 text-[12px] text-white/75 capitalize">{todayLabel}</p>
-        </div>
-      </div>
+      <DashboardHeader
+        firstName={user.first_name}
+        lastName={user.last_name}
+        avatarUrl={user.avatar_url}
+        prefix="Pasteur"
+        churchName={churchName}
+        unread={stats.unread}
+        onAvatarClick={() => router.push('/admin/profile')}
+        onBellClick={() => router.push('/admin/notifications')}
+      />
 
       {/* Stats cards SOUS le gradient */}
       <div className="mt-5 px-4 grid grid-cols-2 gap-3">
