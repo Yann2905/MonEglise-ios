@@ -515,11 +515,12 @@ async function buildReport(familyId: string, year: number): Promise<AutoReport> 
       .eq('family_id', familyId)
       .gte('date', startOfPrevYear)
       .lt('date', startOfYear);
-    prevYearAbsences = ((prevYearAbs as any[]) ?? []).reduce(
-      (sum, a) => sum + (a.absent_count ?? 0),
+    const sumPrev = ((prevYearAbs as any[]) ?? []).reduce(
+      (s, a) => s + (a.absent_count ?? 0),
       0
     );
-    deltaAbsences = totalAbsences - prevYearAbsences;
+    prevYearAbsences = sumPrev;
+    deltaAbsences = totalAbsences - sumPrev;
   }
 
   return {
