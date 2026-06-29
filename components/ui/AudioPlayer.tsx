@@ -126,7 +126,9 @@ export function AudioPlayer({
 
   return (
     <div className="w-full">
-      <audio ref={audioRef} src={optimizedSrc} preload="metadata" />
+      {/* preload=auto → buffer commence dès l'ouverture du lecteur,
+          Play instantané au lieu d'attendre 3-5 sec */}
+      <audio ref={audioRef} src={optimizedSrc} preload="auto" />
 
       {/* Scrubber */}
       <div className="px-1">

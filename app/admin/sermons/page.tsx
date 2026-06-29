@@ -46,17 +46,29 @@ export default function AdminSermonsPage() {
 
   const doDelete = async () => {
     if (!toDelete) return;
-    if (toDelete.audio_public_id) {
-      try {
-        await supabase.functions.invoke('delete-cloudinary', {
-          body: { public_id: toDelete.audio_public_id, resource_type: 'video' },
-        });
-      } catch {}
-    }
-    const { error } = await supabase.from('sermons').delete().eq('id', toDelete.id);
-    if (error) toast.error(error.message);
-    else toast.success('Prédication supprimée');
+    const id = toDelete.id;
+    const audioPublicId = toDelete.audio_public_id;
+
+    // Optimistic UI : on retire immédiatement de la liste
+    setSermons((prev) => prev.filter((s) => s.id !== id));
     setToDelete(null);
+
+    // Delete DB en premier (rapide, ~50 ms)
+    const { error } = await supabase.from('sermons').delete().eq('id', id);
+    if (error) {
+      toast.error(error.message);
+      return; // L'item reviendra via Realtime quand il sera re-fetch
+    }
+    toast.success('Prédication supprimée');
+
+    // Delete Cloudinary en arrière-plan (peut être lent, pas bloquant)
+    if (audioPublicId) {
+      supabase.functions
+        .invoke('delete-cloudinary', {
+          body: { public_id: audioPublicId, resource_type: 'video' },
+        })
+        .catch(() => {});
+    }
   };
 
   return (

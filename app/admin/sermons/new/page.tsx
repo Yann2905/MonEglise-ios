@@ -80,23 +80,26 @@ export default function NewSermonPage() {
       });
       if (error) throw error;
 
-      // Notifier les membres (DB + push)
-      try {
-        const ids = await allChurchMemberIds(user.church_id, user.id);
-        if (ids.length) {
-          await notify({
-            recipients: ids,
-            title: 'Nouvelle prédication',
-            message: audioUrl
-              ? `"${theme}" est disponible.`
-              : `Une nouvelle prédication "${theme}" a été ajoutée.`,
-            type: 'sermon',
-            senderId: user.id,
-            actorName: `${user.first_name} ${user.last_name}`,
-            link: '/member/sermons',
-          });
-        }
-      } catch {}
+      // Notif aux membres : fire-and-forget en arrière-plan
+      // → l'utilisateur ne wait pas la création des N notifs
+      (async () => {
+        try {
+          const ids = await allChurchMemberIds(user.church_id!, user.id);
+          if (ids.length) {
+            await notify({
+              recipients: ids,
+              title: 'Nouvelle prédication',
+              message: audioUrl
+                ? `"${theme}" est disponible.`
+                : `Une nouvelle prédication "${theme}" a été ajoutée.`,
+              type: 'sermon',
+              senderId: user.id,
+              actorName: `${user.first_name} ${user.last_name}`,
+              link: '/member/sermons',
+            });
+          }
+        } catch {}
+      })();
 
       toast.success('Prédication ajoutée');
       router.replace('/admin/sermons');
