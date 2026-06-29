@@ -33,7 +33,7 @@ export function DashboardHeader({
   churchLogoUrl,
   onAvatarClick,
 }: DashboardHeaderProps) {
-  const logoSrc = cldUrl(churchLogoUrl, { w: 160, h: 160 });
+  const logoSrc = cldUrl(churchLogoUrl, { w: 224, h: 224 });
   const today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
@@ -97,11 +97,11 @@ export function DashboardHeader({
             <img
               src={logoSrc}
               alt={`Logo ${churchName ?? ''}`}
-              className="h-20 w-20 rounded-full object-cover ring-2 ring-gold-400/60 shadow-xl flex-shrink-0"
+              className="h-28 w-28 rounded-full object-cover ring-2 ring-gold-400/60 shadow-xl flex-shrink-0"
             />
           ) : (
-            <div className="h-20 w-20 rounded-full bg-white/12 ring-2 ring-gold-400/60 backdrop-blur-md flex items-center justify-center flex-shrink-0">
-              <Building2 className="h-9 w-9 text-white/80" />
+            <div className="h-28 w-28 rounded-full bg-white/12 ring-2 ring-gold-400/60 backdrop-blur-md flex items-center justify-center flex-shrink-0">
+              <Building2 className="h-12 w-12 text-white/80" />
             </div>
           )}
         </div>
