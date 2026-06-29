@@ -36,7 +36,10 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#FFFFFF',
+  // Couleur du header bleu marine → iOS PWA edge-to-edge :
+  // la status bar (heure/batterie) s'affiche en blanc transparent
+  // par-dessus le bleu au lieu d'avoir un fond noir séparé.
+  themeColor: '#234A87',
 };
 
 export default function RootLayout({
