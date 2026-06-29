@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Church } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 
 interface DashboardHeaderProps {
@@ -15,6 +15,11 @@ interface DashboardHeaderProps {
   onBellClick?: () => void;
 }
 
+/**
+ * Header éditorial premium — inspiré Apple News, Hallow, Substack.
+ * Approche "magazine cover" : un grand statement typographique +
+ * métadonnées discrètes + détails luxueux (trait doré, gradient mesh).
+ */
 export function DashboardHeader({
   firstName,
   lastName,
@@ -38,68 +43,81 @@ export function DashboardHeader({
     return 'Bonsoir';
   })();
 
+  const displayName = prefix ? `${prefix} ${firstName}` : firstName;
+
   return (
-    <header className="relative overflow-hidden rounded-b-[32px] pt-safe shadow-ios-lg">
-      {/* Fond : dégradé profond + halo lumineux */}
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500" />
-      <div className="absolute -top-16 -right-10 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
-      <div className="absolute inset-x-0 top-0 h-px bg-white/20" />
+    <header className="relative pt-safe overflow-hidden bg-brand-700 rounded-b-[28px] shadow-[0_8px_24px_-8px_rgba(35,74,135,0.45)]">
+      {/* Gradient mesh subtil pour profondeur */}
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-90"
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 60% at 100% 0%, rgba(255,255,255,0.18), transparent 60%), radial-gradient(ellipse 70% 50% at 0% 100%, rgba(10,19,37,0.5), transparent 60%)',
+        }}
+      />
+      {/* Liseré lumineux supérieur (glass reflection) */}
+      <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-white/15" />
 
-      <div className="relative px-5 pt-3 pb-6">
-        {/* Ligne du haut : église + cloche */}
-        <div className="flex items-center justify-between">
-          {churchName ? (
-            <div className="flex items-center gap-1.5 rounded-full bg-white/12 px-3 py-1.5 backdrop-blur-md ring-1 ring-white/15">
-              <Church className="h-3.5 w-3.5 text-white/90" />
-              <span className="max-w-[160px] truncate text-[12px] font-semibold tracking-wide text-white">
-                {churchName}
-              </span>
-            </div>
-          ) : (
-            <span />
-          )}
-
+      <div className="relative px-5 pt-3 pb-7">
+        {/* Top bar : cloche à gauche, avatar à droite */}
+        <div className="flex items-center justify-between mb-7">
           <button
             onClick={onBellClick}
             aria-label="Notifications"
-            className="relative grid h-10 w-10 place-items-center rounded-full bg-white/12 backdrop-blur-md ring-1 ring-white/15 active:scale-95 transition"
+            className="relative grid h-10 w-10 place-items-center rounded-full bg-white/[0.08] ring-1 ring-white/15 backdrop-blur-md active:scale-95 transition"
           >
-            <Bell className="h-5 w-5 text-white" />
+            <Bell className="h-[18px] w-[18px] text-white" />
             {unread > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-[20px] place-items-center rounded-full bg-ios-red px-1 text-[10px] font-bold text-white ring-2 ring-brand-600">
+              <span className="absolute -right-1 -top-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-ios-red px-1 text-[10px] font-bold text-white ring-2 ring-brand-700">
                 {unread > 99 ? '99+' : unread}
               </span>
             )}
           </button>
-        </div>
 
-        {/* Salutation + identité */}
-        <div className="mt-5 flex items-center gap-4">
-          <button onClick={onAvatarClick} className="active:opacity-70 flex-shrink-0">
+          <button
+            onClick={onAvatarClick}
+            aria-label="Profil"
+            className="active:opacity-80 flex-shrink-0"
+          >
             <Avatar
               firstName={firstName}
               lastName={lastName}
               src={avatarUrl}
-              size={52}
-              className="ring-2 ring-white/40 shadow-lg"
+              size={44}
+              className="ring-[1.5px] ring-gold-400/50 shadow-lg"
             />
           </button>
-          <div className="min-w-0">
-            <p className="text-[12px] font-medium uppercase tracking-[1.5px] text-white/70">
-              {greeting}
-            </p>
-            <h1
-              className="truncate text-[26px] font-semibold leading-tight text-white"
-              style={{ fontFamily: '"Cormorant Garamond", serif' }}
-            >
-              {prefix ? `${prefix} ${firstName}` : firstName}
-            </h1>
-          </div>
         </div>
 
-        {/* Date */}
-        <p className="mt-4 text-[12.5px] font-medium capitalize text-white/65">{today}</p>
+        {/* Bloc éditorial : salutation italique + nom grand serif */}
+        <div>
+          <p
+            className="text-[19px] italic text-white/85 leading-tight"
+            style={{ fontFamily: '"Cormorant Garamond", serif' }}
+          >
+            {greeting},
+          </p>
+          <h1
+            className="mt-0.5 text-[40px] font-semibold leading-[1.02] text-white"
+            style={{
+              fontFamily: '"Cormorant Garamond", serif',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            {displayName}.
+          </h1>
+        </div>
+
+        {/* Filet doré + métadonnées discrètes */}
+        <div className="mt-6 flex items-center gap-3">
+          <div className="h-px w-8 bg-gold-400/80" />
+          <p className="text-[10.5px] font-semibold uppercase tracking-[2.2px] text-white/65">
+            {churchName ? `${churchName} · ${today}` : today}
+          </p>
+        </div>
       </div>
+
     </header>
   );
 }
