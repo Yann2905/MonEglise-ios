@@ -63,15 +63,13 @@ export function DashboardHeader({
       {/* Liseré lumineux supérieur */}
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-white/15" />
 
-      <div className="relative px-5 pt-3 pb-6">
+      <div className="relative px-5 pt-2 pb-4">
         {/* TOP : nom église + date (petit, simple) */}
-        <div className="mb-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[2.2px] text-white/70 truncate">
-            {churchName ? `${churchName} · ${today}` : today}
-          </p>
-        </div>
+        <p className="text-[11px] font-semibold uppercase tracking-[2.2px] text-white/70 truncate mb-3">
+          {churchName ? `${churchName} · ${today}` : today}
+        </p>
 
-        {/* MILIEU : greeting à gauche, GROS LOGO à droite */}
+        {/* Bloc principal : texte + avatar à gauche, GROS LOGO à droite */}
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <p
@@ -81,7 +79,7 @@ export function DashboardHeader({
               {greeting},
             </p>
             <h1
-              className="mt-0.5 text-[40px] font-semibold leading-[1.02] text-white"
+              className="mt-0.5 text-[38px] font-semibold leading-[1.02] text-white"
               style={{
                 fontFamily: '"Cormorant Garamond", serif',
                 letterSpacing: '-0.025em',
@@ -89,6 +87,20 @@ export function DashboardHeader({
             >
               {displayName}.
             </h1>
+            {/* AVATAR directement sous le nom, gap minimal */}
+            <button
+              onClick={onAvatarClick}
+              aria-label="Profil"
+              className="active:opacity-80 inline-block mt-2"
+            >
+              <Avatar
+                firstName={firstName}
+                lastName={lastName}
+                src={avatarUrl}
+                size={64}
+                className="ring-[1.5px] ring-gold-400/50 shadow-lg"
+              />
+            </button>
           </div>
 
           {/* GROS LOGO à droite */}
@@ -104,23 +116,6 @@ export function DashboardHeader({
               <Building2 className="h-12 w-12 text-white/80" />
             </div>
           )}
-        </div>
-
-        {/* AVATAR agrandi sous le nom du pasteur */}
-        <div className="mt-4">
-          <button
-            onClick={onAvatarClick}
-            aria-label="Profil"
-            className="active:opacity-80 inline-block"
-          >
-            <Avatar
-              firstName={firstName}
-              lastName={lastName}
-              src={avatarUrl}
-              size={56}
-              className="ring-[1.5px] ring-gold-400/50 shadow-lg"
-            />
-          </button>
         </div>
       </div>
     </header>
