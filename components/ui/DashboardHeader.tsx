@@ -18,12 +18,11 @@ interface DashboardHeaderProps {
 }
 
 /**
- * Header éditorial premium — Apple News + Hallow + Substack.
+ * Header éditorial premium.
  * Disposition :
- *  - Top-left : Logo rond (56px) + nom église + date
- *  - Top-right : vide (pour l'épure)
- *  - Milieu : salutation italique + nom grand serif
- *  - Bas : filet doré + avatar rond (44px, ring or)
+ *  - Top : nom église · date (texte simple, petit)
+ *  - Milieu : greeting + nom à gauche, GROS LOGO à droite (~80px)
+ *  - Bas : avatar agrandi (~56px) sous le nom du pasteur
  */
 export function DashboardHeader({
   firstName,
@@ -32,10 +31,9 @@ export function DashboardHeader({
   prefix,
   churchName,
   churchLogoUrl,
-  // unread + onBellClick gardés dans l'API pour compat — non utilisés ici
   onAvatarClick,
 }: DashboardHeaderProps) {
-  const logoSrc = cldUrl(churchLogoUrl, { w: 128, h: 128 });
+  const logoSrc = cldUrl(churchLogoUrl, { w: 160, h: 160 });
   const today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
@@ -62,66 +60,64 @@ export function DashboardHeader({
             'radial-gradient(ellipse 80% 60% at 100% 0%, rgba(255,255,255,0.18), transparent 60%), radial-gradient(ellipse 70% 50% at 0% 100%, rgba(10,19,37,0.5), transparent 60%)',
         }}
       />
-      {/* Liseré lumineux supérieur (glass reflection) */}
+      {/* Liseré lumineux supérieur */}
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-white/15" />
 
       <div className="relative px-5 pt-3 pb-6">
-        {/* TOP-LEFT : Logo rond + nom + date */}
-        <div className="flex items-center gap-3 mb-7">
+        {/* TOP : nom église + date (petit, simple) */}
+        <div className="mb-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[2.2px] text-white/70 truncate">
+            {churchName ? `${churchName} · ${today}` : today}
+          </p>
+        </div>
+
+        {/* MILIEU : greeting à gauche, GROS LOGO à droite */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p
+              className="text-[19px] italic text-white/85 leading-tight"
+              style={{ fontFamily: '"Cormorant Garamond", serif' }}
+            >
+              {greeting},
+            </p>
+            <h1
+              className="mt-0.5 text-[40px] font-semibold leading-[1.02] text-white"
+              style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                letterSpacing: '-0.025em',
+              }}
+            >
+              {displayName}.
+            </h1>
+          </div>
+
+          {/* GROS LOGO à droite */}
           {logoSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoSrc}
               alt={`Logo ${churchName ?? ''}`}
-              className="h-14 w-14 rounded-full object-cover ring-[1.5px] ring-gold-400/50 shadow-lg flex-shrink-0"
+              className="h-20 w-20 rounded-full object-cover ring-2 ring-gold-400/60 shadow-xl flex-shrink-0"
             />
           ) : (
-            <div className="h-14 w-14 rounded-full bg-white/12 ring-[1.5px] ring-gold-400/50 backdrop-blur-md flex items-center justify-center flex-shrink-0">
-              <Building2 className="h-6 w-6 text-white/80" />
+            <div className="h-20 w-20 rounded-full bg-white/12 ring-2 ring-gold-400/60 backdrop-blur-md flex items-center justify-center flex-shrink-0">
+              <Building2 className="h-9 w-9 text-white/80" />
             </div>
           )}
-          <div className="min-w-0">
-            {churchName && (
-              <p className="text-[15px] font-semibold tracking-sf-tight text-white truncate">
-                {churchName}
-              </p>
-            )}
-            <p className="text-[12px] text-white/65 capitalize">{today}</p>
-          </div>
         </div>
 
-        {/* Bloc éditorial : salutation italique + nom grand serif */}
-        <div>
-          <p
-            className="text-[19px] italic text-white/85 leading-tight"
-            style={{ fontFamily: '"Cormorant Garamond", serif' }}
-          >
-            {greeting},
-          </p>
-          <h1
-            className="mt-0.5 text-[40px] font-semibold leading-[1.02] text-white"
-            style={{
-              fontFamily: '"Cormorant Garamond", serif',
-              letterSpacing: '-0.025em',
-            }}
-          >
-            {displayName}.
-          </h1>
-        </div>
-
-        {/* Filet doré + photo de profil */}
-        <div className="mt-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-gold-400/40" />
+        {/* AVATAR agrandi sous le nom du pasteur */}
+        <div className="mt-4">
           <button
             onClick={onAvatarClick}
             aria-label="Profil"
-            className="active:opacity-80 flex-shrink-0"
+            className="active:opacity-80 inline-block"
           >
             <Avatar
               firstName={firstName}
               lastName={lastName}
               src={avatarUrl}
-              size={44}
+              size={56}
               className="ring-[1.5px] ring-gold-400/50 shadow-lg"
             />
           </button>
