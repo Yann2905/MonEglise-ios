@@ -22,6 +22,9 @@ export interface AnnualReportData {
   churchName: string;
   familyName: string;
   year: number;
+  /** Ex: "Juillet → Décembre 2026" ou "Année complète 2027" */
+  periodLabel?: string;
+  isFirstPartialYear?: boolean;
   submittedByName: string;
   // Composition
   totalMembers: number;
@@ -78,7 +81,8 @@ export function generateAnnualReportPdf(data: AnnualReportData): Blob {
   doc.text(data.churchName, margin, 16);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Rapport annuel ${data.year}`, margin, 24);
+  const headerLabel = data.periodLabel ?? `Rapport annuel ${data.year}`;
+  doc.text(headerLabel, margin, 24);
   // Filet doré
   setFill(COLORS.gold);
   doc.rect(margin, 30, 18, 0.8, 'F');

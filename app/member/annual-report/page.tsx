@@ -23,6 +23,10 @@ import type { Family } from '@/lib/types';
 
 interface AutoReport {
   year: number;
+  /** Étiquette de la période, ex: "Juillet → Décembre 2026" ou "Année complète 2027" */
+  periodLabel: string;
+  /** True si l'église a été créée cette année (rapport partiel) */
+  isFirstPartialYear: boolean;
   totalMembers: number;
   membersList: { name: string; role: string }[];
   newMembers: NewMemberItem[];
@@ -100,11 +104,11 @@ function Content() {
 
   // Quand on choisit une famille → auto-génère tout
   useEffect(() => {
-    if (!selectedFamilyId) return;
+    if (!selectedFamilyId || !user?.church_id) return;
     (async () => {
       setGenerating(true);
       try {
-        const data = await buildReport(selectedFamilyId, year);
+        const data = await buildReport(selectedFamilyId, user.church_id!, year);
         setReport(data);
       } catch (e: any) {
         toast.error('Génération impossible : ' + e.message);
@@ -112,7 +116,7 @@ function Content() {
         setGenerating(false);
       }
     })();
-  }, [selectedFamilyId, year]);
+  }, [selectedFamilyId, year, user]);
 
   const selectedFamily = myFamilies.find((f) => f.id === selectedFamilyId);
 
@@ -126,6 +130,8 @@ function Content() {
         churchName,
         familyName: selectedFamily.name,
         year: report.year,
+        periodLabel: report.periodLabel,
+        isFirstPartialYear: report.isFirstPartialYear,
         submittedByName: `${user.first_name} ${user.last_name}`,
         totalMembers: report.totalMembers,
         membersList: report.membersList,
@@ -204,6 +210,8 @@ function Content() {
       churchName,
       familyName: selectedFamily.name,
       year: report.year,
+      periodLabel: report.periodLabel,
+      isFirstPartialYear: report.isFirstPartialYear,
       submittedByName: `${user.first_name} ${user.last_name}`,
       totalMembers: report.totalMembers,
       membersList: report.membersList,
@@ -300,9 +308,16 @@ function Content() {
           <div className="space-y-4">
             {/* Banner famille */}
             <div className="rounded-ios-xl bg-gradient-to-br from-brand-600 to-brand-500 p-5 text-white shadow-ios-lg">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-white/80">Rapport {year}</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-white/80">
+                {report.periodLabel}
+              </p>
               <h2 className="mt-1 text-[24px] font-bold tracking-sf-tighter">{selectedFamily.name}</h2>
               <p className="mt-1 text-[13px] text-white/90">{churchName}</p>
+              {report.isFirstPartialYear && (
+                <p className="mt-2 text-[12px] text-white/75 italic">
+                  Première année d'existence — rapport partiel
+                </p>
+              )}
             </div>
 
             {/* KPIs */}
@@ -412,11 +427,37 @@ function StatCard({ icon, label, value, sub, color }: { icon: React.ReactNode; l
 
 // ───────────────────────────────────────────────────────────
 // Construction du rapport (toute la logique métier)
+//
+// Cas particulier : si l'église a été créée DANS l'année du rapport,
+// la période couverte n'est PAS du 1er janvier mais de la date de
+// création jusqu'au 31 décembre. Et pas de comparaison N-1
+// (l'année précédente n'existait pas).
 // ───────────────────────────────────────────────────────────
-async function buildReport(familyId: string, year: number): Promise<AutoReport> {
-  const startOfYear = new Date(year, 0, 1).toISOString();
+async function buildReport(
+  familyId: string,
+  churchId: string,
+  year: number
+): Promise<AutoReport> {
+  const janFirst = new Date(year, 0, 1);
   const startOfNextYear = new Date(year + 1, 0, 1).toISOString();
   const startOfPrevYear = new Date(year - 1, 0, 1).toISOString();
+
+  // 0. Date de création de l'église
+  const { data: church } = await supabase
+    .from('churches')
+    .select('created_at')
+    .eq('id', churchId)
+    .maybeSingle();
+  const churchCreatedAt = church?.created_at ? new Date(church.created_at) : janFirst;
+
+  // Période réelle = max(création église, 1er janvier de l'année)
+  const periodStart = churchCreatedAt > janFirst ? churchCreatedAt : janFirst;
+  const isFirstPartialYear = churchCreatedAt > janFirst;
+  const periodStartIso = periodStart.toISOString();
+
+  const periodLabel = isFirstPartialYear
+    ? `${MONTHS[periodStart.getMonth()]} → Décembre ${year}`
+    : `Année complète ${year}`;
 
   // 1. Membres actuels
   const { data: links } = await supabase
@@ -442,13 +483,13 @@ async function buildReport(familyId: string, year: number): Promise<AutoReport> 
     role: labelOfChurchRole(u.church_role),
   }));
 
-  // 2. Nouveaux membres (joined_at dans l'année courante)
+  // 2. Nouveaux membres (joined_at dans la période)
   const newMembers: NewMemberItem[] = [];
   for (const u of (users as any[]) ?? []) {
     const joined = joinedMap[u.id];
     if (!joined) continue;
     const d = new Date(joined);
-    if (d.getFullYear() === year) {
+    if (d >= periodStart && d.getFullYear() === year) {
       newMembers.push({
         name: `${u.first_name} ${u.last_name}`,
         monthLabel: MONTHS[d.getMonth()],
@@ -457,12 +498,12 @@ async function buildReport(familyId: string, year: number): Promise<AutoReport> 
   }
   newMembers.sort((a, b) => MONTHS.indexOf(a.monthLabel) - MONTHS.indexOf(b.monthLabel));
 
-  // 3. Absences de l'année
+  // 3. Absences de la période
   const { data: absences } = await supabase
     .from('absences')
     .select('absent_members, date')
     .eq('family_id', familyId)
-    .gte('date', startOfYear)
+    .gte('date', periodStartIso)
     .lt('date', startOfNextYear);
 
   const absencesArr = (absences as any[]) ?? [];
@@ -498,33 +539,28 @@ async function buildReport(familyId: string, year: number): Promise<AutoReport> 
     topAssiduous.push(...ranking.slice(0, 3));
   }
 
-  // 6. Comparaison année précédente
-  const { count: prevYearAbsenceCount } = await supabase
-    .from('absences')
-    .select('absent_count', { count: 'exact', head: false })
-    .eq('family_id', familyId)
-    .gte('date', startOfPrevYear)
-    .lt('date', startOfYear);
-
+  // 6. Comparaison année précédente — SKIPPÉE si 1ère année partielle
   let prevYearAbsences: number | null = null;
   let deltaAbsences: number | null = null;
-  if (prevYearAbsenceCount != null && prevYearAbsenceCount > 0) {
+  if (!isFirstPartialYear) {
     const { data: prevYearAbs } = await supabase
       .from('absences')
       .select('absent_count')
       .eq('family_id', familyId)
       .gte('date', startOfPrevYear)
-      .lt('date', startOfYear);
-    const sumPrev = ((prevYearAbs as any[]) ?? []).reduce(
-      (s, a) => s + (a.absent_count ?? 0),
-      0
-    );
-    prevYearAbsences = sumPrev;
-    deltaAbsences = totalAbsences - sumPrev;
+      .lt('date', janFirst.toISOString());
+    const arr = (prevYearAbs as any[]) ?? [];
+    if (arr.length > 0) {
+      const sumPrev = arr.reduce((s, a) => s + (a.absent_count ?? 0), 0);
+      prevYearAbsences = sumPrev;
+      deltaAbsences = totalAbsences - sumPrev;
+    }
   }
 
   return {
     year,
+    periodLabel,
+    isFirstPartialYear,
     totalMembers: membersList.length,
     membersList,
     newMembers,
