@@ -26,9 +26,10 @@ export function AudioPlayer({
   shareable = true,
   audioType = 'speech',
 }: AudioPlayerProps) {
-  // Version compressée Cloudinary (à la volée, pas de transformation au stockage)
-  // → ~5× plus rapide à streamer
-  const optimizedSrc = cldAudioUrl(src, audioType) ?? src;
+  // Utilise l'URL ORIGINALE (eager async = la transformation peut ne pas
+  // être prête → wait de 5-10s à la 1ère lecture). HTML5 audio streame
+  // l'original par chunks → démarrage rapide même sur fichier 60 MB.
+  const optimizedSrc = src;
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
