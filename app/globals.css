@@ -19,10 +19,6 @@
     text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-x: none;
-    /* Fond derrière la safe-area iOS : la status bar (heure/batterie)
-       en mode black-translucent montre ce fond, du coup elle a la
-       couleur du header bleu marine au lieu d'un fond noir. */
-    background-color: #234A87;
   }
 
   body {

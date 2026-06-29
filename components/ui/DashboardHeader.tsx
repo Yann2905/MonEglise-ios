@@ -51,6 +51,14 @@ export function DashboardHeader({
 
   return (
     <header className="relative pt-safe overflow-hidden bg-brand-700">
+      {/* Bande fixe couvrant la status bar iOS — assure que la zone
+          de la status bar prend la couleur du header (brand-700).
+          z-index élevé pour rester au-dessus du contenu en scroll. */}
+      <div
+        aria-hidden
+        className="fixed top-0 inset-x-0 bg-brand-700 z-[60] pt-safe"
+        style={{ height: 'env(safe-area-inset-top, 0px)' }}
+      />
       {/* Gradient mesh subtil pour profondeur */}
       <div
         aria-hidden
