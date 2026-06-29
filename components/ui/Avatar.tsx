@@ -1,6 +1,7 @@
 'use client';
 
 import { cn, getInitials } from '@/lib/utils';
+import { cldUrl } from '@/lib/cloudinary';
 import Image from 'next/image';
 import { useState } from 'react';
 
@@ -14,7 +15,10 @@ interface AvatarProps {
 
 export function Avatar({ firstName, lastName, src, size = 44, className }: AvatarProps) {
   const [errored, setErrored] = useState(false);
-  const showImage = src && !errored;
+  // Demande à Cloudinary la version optimisée (taille × densité écran 2x)
+  // → réduit le poids réseau de ~95% sur les listes de membres
+  const optimizedSrc = cldUrl(src, { w: size * 2, h: size * 2, face: true });
+  const showImage = optimizedSrc && !errored;
   const initials = getInitials(firstName, lastName);
   const fontSize = Math.round(size * 0.36);
 
@@ -29,10 +33,10 @@ export function Avatar({ firstName, lastName, src, size = 44, className }: Avata
     >
       {showImage ? (
         <Image
-          src={src}
+          src={optimizedSrc}
           alt={`${firstName} ${lastName}`}
           fill
-          sizes={`${size}px`}
+          sizes={`${size * 2}px`}
           className="object-cover"
           onError={() => setErrored(true)}
         />

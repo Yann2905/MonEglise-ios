@@ -34,6 +34,32 @@ export function uploadImage(
   });
 }
 
+/**
+ * Transforme une URL Cloudinary pour récupérer une version optimisée
+ * (taille, qualité auto, format auto webp/avif si supporté).
+ *
+ * Ex: cldUrl(url, { w: 88, h: 88, face: true })
+ * → https://res.cloudinary.com/.../upload/w_88,h_88,c_fill,g_face,f_auto,q_auto/...
+ *
+ * Gain : un avatar 88×88 fait ~5 KB au lieu de l'image originale de ~200 KB.
+ */
+export function cldUrl(
+  url: string | null | undefined,
+  opts: { w?: number; h?: number; face?: boolean } = {}
+): string | null {
+  if (!url) return null;
+  if (!url.includes('res.cloudinary.com')) return url;
+  const parts = url.split('/upload/');
+  if (parts.length !== 2) return url;
+  const transforms: string[] = [];
+  if (opts.w) transforms.push(`w_${opts.w}`);
+  if (opts.h) transforms.push(`h_${opts.h}`);
+  if (opts.w || opts.h) transforms.push('c_fill');
+  if (opts.face) transforms.push('g_face');
+  transforms.push('f_auto', 'q_auto');
+  return `${parts[0]}/upload/${transforms.join(',')}/${parts[1]}`;
+}
+
 /** Supprime une ressource Cloudinary via l'Edge Function */
 export async function destroyCloudinary(publicId: string, resourceType: 'image' | 'video' = 'image') {
   const { supabase } = await import('./supabase');

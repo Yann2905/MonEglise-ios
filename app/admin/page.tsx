@@ -82,6 +82,20 @@ export default function AdminDashboard() {
     };
   }, [user]);
 
+  // Préfetch les routes accessibles depuis le dashboard pour navigation instantanée
+  useEffect(() => {
+    const routes = [
+      '/admin/members',
+      '/admin/families',
+      '/admin/attendance',
+      '/admin/notifications',
+      '/admin/sermons',
+      '/admin/services',
+      '/admin/profile',
+    ];
+    routes.forEach((r) => router.prefetch(r));
+  }, [router]);
+
   if (!user) return null;
 
   return (

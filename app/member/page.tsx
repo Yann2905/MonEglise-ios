@@ -90,6 +90,19 @@ export default function MemberDashboard() {
     };
   }, [user]);
 
+  // Préfetch les routes accessibles pour navigation instantanée
+  useEffect(() => {
+    const routes = [
+      '/member/families',
+      '/member/messages',
+      '/member/profile',
+      '/member/sermons',
+      '/member/services',
+      '/member/attendance',
+    ];
+    routes.forEach((r) => router.prefetch(r));
+  }, [router]);
+
   if (!user) return null;
 
   return (
