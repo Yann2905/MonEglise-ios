@@ -31,7 +31,7 @@ export default function AdminDashboard() {
     const loadAll = async () => {
       const [{ count: members }, { count: families }, { count: unread }] = await Promise.all([
         supabase.from('users').select('*', { count: 'exact', head: true }).eq('church_id', churchId),
-        supabase.from('families').select('*', { count: 'exact', head: true }).eq('church_id', churchId).eq('is_institutional', false),
+        supabase.from('families').select('*', { count: 'exact', head: true }).eq('church_id', churchId),
         supabase.from('notifications').select('*', { count: 'exact', head: true }).eq('receiver_id', user.id).eq('is_read', false),
       ]);
 
