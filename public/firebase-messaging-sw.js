@@ -1,8 +1,7 @@
 // Service worker Firebase Cloud Messaging
-// Reçoit les notifications push quand l'app est fermée / en arrière-plan
-//
-// Note : Firebase ne lit pas process.env ici → on importe les SDK CDN
-// avec la même config que .env.local (clés client = publiques par design).
+// - Reçoit les notifications push quand l'app est fermée / en arrière-plan
+// - Incrémente la badge de l'icône PWA (App Badging API)
+// - Deep-link sur clic vers la page concernée
 
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
@@ -18,14 +17,30 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// onBackgroundMessage : Firebase SDK affiche DÉJÀ la notification
-// automatiquement quand le payload contient un champ `notification`.
-// On n'affiche manuellement QUE pour les payloads data-only (sinon doublon).
-messaging.onBackgroundMessage((payload) => {
-  if (payload.notification) {
-    // Firebase a déjà géré → on ne fait rien (sinon 2 notifs identiques)
-    return;
+// Compteur de badge (suit le nombre de notifs reçues depuis la dernière vidange)
+async function bumpBadge() {
+  try {
+    if ('setAppBadge' in self.navigator) {
+      // On ne connaît pas le compteur réel ici, mais on incrémente d'1 à la louche.
+      // Quand l'app s'ouvre, le client recalcule depuis la DB (Realtime) et
+      // appelle setAppBadge/clearAppBadge avec la vraie valeur.
+      // @ts-ignore
+      const current = (self.__badgeCount ?? 0) + 1;
+      // @ts-ignore
+      self.__badgeCount = current;
+      await self.navigator.setAppBadge(current);
+    }
+  } catch (e) {
+    // setAppBadge peut être absent ou non supporté → silence
   }
+}
+
+// onBackgroundMessage : Firebase SDK affiche déjà la notif quand un champ
+// `notification` est présent. On gère seulement la badge ici (et le cas
+// data-only où on doit afficher manuellement).
+messaging.onBackgroundMessage((payload) => {
+  bumpBadge();
+  if (payload.notification) return; // SDK a déjà affiché
   const title = payload.data?.title || 'MonÉglise';
   const options = {
     body: payload.data?.message || '',
@@ -38,15 +53,50 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(title, options);
 });
 
-// Clic sur la notif → ouvre l'app
+// Clic sur une notification → deep-link vers la page concernée + clear badge
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
+  const data = event.notification.data || {};
+  const link = data.link || data.FCM_MSG?.data?.link || '/';
+
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    (async () => {
+      // 1. Reset compteur SW (le client recalculera la vraie valeur ensuite)
+      try {
+        // @ts-ignore
+        self.__badgeCount = 0;
+        if ('clearAppBadge' in self.navigator) {
+          // @ts-ignore
+          await self.navigator.clearAppBadge();
+        }
+      } catch {}
+
+      // 2. Focus une fenêtre existante OU en ouvre une nouvelle sur le link
+      const clientList = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      });
+
+      // Cherche une fenêtre déjà ouverte → naviguer dessus
       for (const client of clientList) {
-        if ('focus' in client) return client.focus();
+        if ('focus' in client && 'navigate' in client) {
+          try {
+            await client.focus();
+            // @ts-ignore : navigate existe sur WindowClient
+            await client.navigate(link);
+            return;
+          } catch {
+            // Si la navigation échoue (cross-origin par ex), on focus simplement
+            return client.focus();
+          }
+        }
       }
-      if (clients.openWindow) return clients.openWindow('/');
-    })
+
+      // Sinon ouvrir une nouvelle fenêtre
+      if (self.clients.openWindow) {
+        await self.clients.openWindow(link);
+      }
+    })()
   );
 });

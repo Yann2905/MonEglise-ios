@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BellRing } from 'lucide-react';
+import { BellRing, CheckCheck } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { NavBar } from '@/components/ui/NavBar';
@@ -38,9 +39,36 @@ export default function MemberMessagesPage() {
     await supabase.from('notifications').update({ is_read: true }).eq('id', id);
   };
 
+  const markAllRead = async () => {
+    if (!user) return;
+    const unreadIds = items.filter((n) => !n.is_read).map((n) => n.id);
+    if (unreadIds.length === 0) return;
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .in('id', unreadIds);
+    if (error) toast.error(error.message);
+    else toast.success(`${unreadIds.length} marqué${unreadIds.length > 1 ? 's' : ''} comme lu${unreadIds.length > 1 ? 's' : ''}`);
+  };
+
+  const unreadCount = items.filter((n) => !n.is_read).length;
+
   return (
     <div>
-      <NavBar largeTitle="Messages" />
+      <NavBar
+        largeTitle="Messages"
+        trailing={
+          unreadCount > 0 ? (
+            <button
+              onClick={markAllRead}
+              className="px-3 py-1.5 -mr-2 text-brand-600 active:opacity-60 inline-flex items-center gap-1"
+              aria-label="Tout marquer comme lu"
+            >
+              <CheckCheck className="h-5 w-5" />
+            </button>
+          ) : undefined
+        }
+      />
 
       <div className="px-4 pt-2">
         {items.length === 0 ? (

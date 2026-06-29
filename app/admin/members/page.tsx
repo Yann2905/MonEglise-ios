@@ -85,6 +85,7 @@ export default function AdminMembersPage() {
           type: 'system',
           senderId: user.id,
           actorName: `${user.first_name} ${user.last_name}`,
+          link: '/member/profile',
         });
       }
     }

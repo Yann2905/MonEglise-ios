@@ -18,6 +18,8 @@ interface NotifyParams {
   senderId: string;
   actorName?: string | null;
   metadata?: Record<string, any>;
+  /** URL (relative) vers laquelle la notif push doit deeplink quand cliquée */
+  link?: string;
 }
 
 export async function notify(p: NotifyParams) {
@@ -48,7 +50,8 @@ export async function notify(p: NotifyParams) {
         title: p.title,
         message: p.message,
         user_ids: ids,
-        data: { type: p.type, ...(p.metadata ?? {}) },
+        link: p.link, // deep link cliqué côté SW
+        data: { type: p.type, ...(p.link ? { link: p.link } : {}), ...(p.metadata ?? {}) },
       },
     });
   } catch (e) {

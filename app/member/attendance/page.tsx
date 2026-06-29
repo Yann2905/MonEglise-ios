@@ -143,6 +143,7 @@ export default function MemberAttendancePage() {
             senderId: user.id,
             actorName: `${user.first_name} ${user.last_name}`,
             metadata: absenceId ? { absence_id: absenceId } : undefined,
+            link: absenceId ? `/admin/absence/${absenceId}` : '/admin/notifications',
           });
         }
       } catch {}

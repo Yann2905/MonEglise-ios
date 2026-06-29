@@ -112,6 +112,7 @@ function ServiceFormContent() {
             type: 'system',
             senderId: user.id,
             actorName: `${user.first_name} ${user.last_name}`,
+            link: '/member/services',
           });
         }
       }

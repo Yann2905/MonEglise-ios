@@ -97,6 +97,7 @@ export default function FamilyDetailPage() {
           type: 'system',
           senderId: user.id,
           actorName: `${user.first_name} ${user.last_name}`,
+          link: '/member/families',
         });
       }
     }
@@ -123,6 +124,7 @@ export default function FamilyDetailPage() {
           type: 'system',
           senderId: user.id,
           actorName: `${user.first_name} ${user.last_name}`,
+          link: '/member/families',
         });
       }
     }
@@ -143,6 +145,7 @@ export default function FamilyDetailPage() {
           type: 'system',
           senderId: user.id,
           actorName: `${user.first_name} ${user.last_name}`,
+          link: `/admin/families/${id}`,
         });
       }
     }

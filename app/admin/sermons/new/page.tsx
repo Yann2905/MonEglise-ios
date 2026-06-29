@@ -93,6 +93,7 @@ export default function NewSermonPage() {
             type: 'sermon',
             senderId: user.id,
             actorName: `${user.first_name} ${user.last_name}`,
+            link: '/member/sermons',
           });
         }
       } catch {}

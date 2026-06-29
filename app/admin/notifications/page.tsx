@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, BellRing } from 'lucide-react';
+import { Send, BellRing, CheckCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -100,6 +100,7 @@ export default function AdminNotificationsPage() {
         type: 'custom',
         senderId: user.id,
         actorName: `${user.first_name} ${user.last_name}`,
+        link: '/member/messages',
       });
 
       toast.success(`Envoyée à ${recipients.size} membre${recipients.size > 1 ? 's' : ''}`);
@@ -119,9 +120,35 @@ export default function AdminNotificationsPage() {
     await supabase.from('notifications').update({ is_read: true }).eq('id', id);
   };
 
+  const markAllRead = async () => {
+    const unreadIds = received.filter((n) => !n.is_read).map((n) => n.id);
+    if (unreadIds.length === 0) return;
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .in('id', unreadIds);
+    if (error) toast.error(error.message);
+    else toast.success(`${unreadIds.length} marqué${unreadIds.length > 1 ? 's' : ''} comme lu${unreadIds.length > 1 ? 's' : ''}`);
+  };
+
+  const unreadCount = received.filter((n) => !n.is_read).length;
+
   return (
     <div>
-      <NavBar largeTitle="Alertes" />
+      <NavBar
+        largeTitle="Alertes"
+        trailing={
+          tab === 'received' && unreadCount > 0 ? (
+            <button
+              onClick={markAllRead}
+              className="px-3 py-1.5 -mr-2 text-brand-600 active:opacity-60 inline-flex items-center gap-1"
+              aria-label="Tout marquer comme lu"
+            >
+              <CheckCheck className="h-5 w-5" />
+            </button>
+          ) : undefined
+        }
+      />
 
       {/* Segmented control */}
       <div className="px-4 mt-1">
