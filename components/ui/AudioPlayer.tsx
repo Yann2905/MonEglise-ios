@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Gauge, Download, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { cldAudioUrl } from '@/lib/cloudinary';
 
 interface AudioPlayerProps {
   src: string;
@@ -10,12 +11,24 @@ interface AudioPlayerProps {
   artist?: string;
   downloadable?: boolean;
   shareable?: boolean;
+  /** Type de contenu : 'speech' (par défaut, parole) ou 'music' (chant/musique) */
+  audioType?: 'speech' | 'music';
 }
 
 const SPEEDS = [1, 1.25, 1.5, 2];
 
 /** Lecteur audio premium : play/pause, skip ±10s, scrubber, vitesse */
-export function AudioPlayer({ src, title, artist, downloadable = true, shareable = true }: AudioPlayerProps) {
+export function AudioPlayer({
+  src,
+  title,
+  artist,
+  downloadable = true,
+  shareable = true,
+  audioType = 'speech',
+}: AudioPlayerProps) {
+  // Version compressée Cloudinary (à la volée, pas de transformation au stockage)
+  // → ~5× plus rapide à streamer
+  const optimizedSrc = cldAudioUrl(src, audioType) ?? src;
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -113,7 +126,7 @@ export function AudioPlayer({ src, title, artist, downloadable = true, shareable
 
   return (
     <div className="w-full">
-      <audio ref={audioRef} src={src} preload="metadata" />
+      <audio ref={audioRef} src={optimizedSrc} preload="metadata" />
 
       {/* Scrubber */}
       <div className="px-1">
@@ -202,9 +215,9 @@ export function AudioPlayer({ src, title, artist, downloadable = true, shareable
           {shareable && (
             <button
               onClick={() => {
-                const shareText = `${title ? `🎙️ ${title}\n` : '🎙️ Prédication\n'}${src}\n\nVia MonÉglise`;
+                const shareText = `${title ? `🎙️ ${title}\n` : '🎙️ Prédication\n'}${optimizedSrc}\n\nVia MonÉglise`;
                 if ((navigator as any).share) {
-                  (navigator as any).share({ text: shareText, url: src }).catch(() => {});
+                  (navigator as any).share({ text: shareText, url: optimizedSrc }).catch(() => {});
                 } else {
                   window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
                 }
@@ -217,7 +230,7 @@ export function AudioPlayer({ src, title, artist, downloadable = true, shareable
           )}
           {downloadable && (
             <a
-              href={src}
+              href={optimizedSrc}
               download
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold bg-ios-gray6 text-brand-600 active:opacity-70"
             >

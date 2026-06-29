@@ -60,6 +60,33 @@ export function cldUrl(
   return `${parts[0]}/upload/${transforms.join(',')}/${parts[1]}`;
 }
 
+/**
+ * Optimise une URL audio Cloudinary à la volée.
+ *
+ * Cloudinary route les audios via /video/upload/ (convention interne).
+ * On compresse à 64 kbps AAC mono — qualité parfaite pour la parole
+ * (prédications), 5× plus petit qu'un MP3 320 kbps original.
+ *
+ * Stratégies disponibles :
+ *  - 'speech' (défaut) : 64 kbps AAC mono — parole humaine, ~5× plus léger
+ *  - 'music'           : 96 kbps AAC stéréo — meilleur pour louange/chant
+ *  - 'original'        : aucune transformation — fichier brut
+ */
+export function cldAudioUrl(
+  url: string | null | undefined,
+  preset: 'speech' | 'music' | 'original' = 'speech'
+): string | null {
+  if (!url) return null;
+  if (!url.includes('res.cloudinary.com')) return url;
+  if (preset === 'original') return url;
+  const parts = url.split('/upload/');
+  if (parts.length !== 2) return url;
+  const transforms = preset === 'music'
+    ? 'br_96k,ac_aac,f_m4a' // 96 kbps stéréo
+    : 'br_64k,ac_aac,f_m4a,e_volume:auto'; // 64 kbps mono + normalisation
+  return `${parts[0]}/upload/${transforms}/${parts[1]}`;
+}
+
 /** Supprime une ressource Cloudinary via l'Edge Function */
 export async function destroyCloudinary(publicId: string, resourceType: 'image' | 'video' = 'image') {
   const { supabase } = await import('./supabase');
