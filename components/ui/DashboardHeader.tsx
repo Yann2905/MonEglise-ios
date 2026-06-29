@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { cldUrl } from '@/lib/cloudinary';
 
@@ -18,9 +18,12 @@ interface DashboardHeaderProps {
 }
 
 /**
- * Header éditorial premium — inspiré Apple News, Hallow, Substack.
- * Approche "magazine cover" : un grand statement typographique +
- * métadonnées discrètes + détails luxueux (trait doré, gradient mesh).
+ * Header éditorial premium — Apple News + Hallow + Substack.
+ * Disposition :
+ *  - Top-left : Logo rond (56px) + nom église + date
+ *  - Top-right : vide (pour l'épure)
+ *  - Milieu : salutation italique + nom grand serif
+ *  - Bas : filet doré + avatar rond (44px, ring or)
  */
 export function DashboardHeader({
   firstName,
@@ -29,11 +32,10 @@ export function DashboardHeader({
   prefix,
   churchName,
   churchLogoUrl,
-  unread = 0,
+  // unread + onBellClick gardés dans l'API pour compat — non utilisés ici
   onAvatarClick,
-  onBellClick,
 }: DashboardHeaderProps) {
-  const logoSrc = cldUrl(churchLogoUrl, { w: 96, h: 96 });
+  const logoSrc = cldUrl(churchLogoUrl, { w: 128, h: 128 });
   const today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
@@ -63,35 +65,29 @@ export function DashboardHeader({
       {/* Liseré lumineux supérieur (glass reflection) */}
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-white/15" />
 
-      <div className="relative px-5 pt-3 pb-7">
-        {/* Top bar : cloche à gauche, avatar à droite */}
-        <div className="flex items-center justify-between mb-7">
-          <button
-            onClick={onBellClick}
-            aria-label="Notifications"
-            className="relative grid h-10 w-10 place-items-center rounded-full bg-white/[0.08] ring-1 ring-white/15 backdrop-blur-md active:scale-95 transition"
-          >
-            <Bell className="h-[18px] w-[18px] text-white" />
-            {unread > 0 && (
-              <span className="absolute -right-1 -top-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-ios-red px-1 text-[10px] font-bold text-white ring-2 ring-brand-700">
-                {unread > 99 ? '99+' : unread}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={onAvatarClick}
-            aria-label="Profil"
-            className="active:opacity-80 flex-shrink-0"
-          >
-            <Avatar
-              firstName={firstName}
-              lastName={lastName}
-              src={avatarUrl}
-              size={44}
-              className="ring-[1.5px] ring-gold-400/50 shadow-lg"
+      <div className="relative px-5 pt-3 pb-6">
+        {/* TOP-LEFT : Logo rond + nom + date */}
+        <div className="flex items-center gap-3 mb-7">
+          {logoSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoSrc}
+              alt={`Logo ${churchName ?? ''}`}
+              className="h-14 w-14 rounded-full object-cover ring-[1.5px] ring-gold-400/50 shadow-lg flex-shrink-0"
             />
-          </button>
+          ) : (
+            <div className="h-14 w-14 rounded-full bg-white/12 ring-[1.5px] ring-gold-400/50 backdrop-blur-md flex items-center justify-center flex-shrink-0">
+              <Building2 className="h-6 w-6 text-white/80" />
+            </div>
+          )}
+          <div className="min-w-0">
+            {churchName && (
+              <p className="text-[15px] font-semibold tracking-sf-tight text-white truncate">
+                {churchName}
+              </p>
+            )}
+            <p className="text-[12px] text-white/65 capitalize">{today}</p>
+          </div>
         </div>
 
         {/* Bloc éditorial : salutation italique + nom grand serif */}
@@ -113,24 +109,24 @@ export function DashboardHeader({
           </h1>
         </div>
 
-        {/* Filet doré + métadonnées discrètes */}
+        {/* Filet doré + photo de profil */}
         <div className="mt-6 flex items-center gap-3">
-          {logoSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logoSrc}
-              alt="Logo église"
-              className="h-7 w-7 rounded-md object-cover ring-1 ring-white/20"
+          <div className="h-px flex-1 bg-gold-400/40" />
+          <button
+            onClick={onAvatarClick}
+            aria-label="Profil"
+            className="active:opacity-80 flex-shrink-0"
+          >
+            <Avatar
+              firstName={firstName}
+              lastName={lastName}
+              src={avatarUrl}
+              size={44}
+              className="ring-[1.5px] ring-gold-400/50 shadow-lg"
             />
-          ) : (
-            <div className="h-px w-8 bg-gold-400/80" />
-          )}
-          <p className="text-[10.5px] font-semibold uppercase tracking-[2.2px] text-white/65">
-            {churchName ? `${churchName} · ${today}` : today}
-          </p>
+          </button>
         </div>
       </div>
-
     </header>
   );
 }
