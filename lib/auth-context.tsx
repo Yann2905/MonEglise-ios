@@ -127,6 +127,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user, loadById]);
 
+  /**
+   * Heartbeat last_seen : update toutes les 30 sec quand l'app est en
+   * foreground. Le worker process-push-queue lit ce champ pour skip
+   * les pushes des users actifs (déjà notifiés via Realtime).
+   */
+  useEffect(() => {
+    if (!user || typeof window === 'undefined') return;
+    let cancelled = false;
+
+    const ping = async () => {
+      if (cancelled) return;
+      if (document.visibilityState !== 'visible') return;
+      try {
+        await supabase
+          .from('users')
+          .update({ last_seen: new Date().toISOString() })
+          .eq('id', user.id);
+      } catch {}
+    };
+
+    // 1er ping au mount
+    ping();
+    // Puis toutes les 30 sec
+    const interval = setInterval(ping, 30_000);
+    // Ping aussi quand l'app revient au premier plan
+    document.addEventListener('visibilitychange', ping);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', ping);
+    };
+  }, [user]);
+
   const refresh = useCallback(async () => {
     if (!user) return;
     const fresh = await loadById(user.id);
