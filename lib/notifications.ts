@@ -1,9 +1,12 @@
 // Helper centralisé pour créer des notifications.
-// - Insert dans `notifications` table (alimente la cloche + Realtime)
-// - Invoque l'Edge Function `send-push` (envoi FCM aux device_tokens)
 //
-// Best-effort sur le push : si l'edge fonction est down, la notif reste
-// quand même créée en DB et visible quand l'app s'ouvre.
+// PATTERN QUEUE :
+// On insère uniquement dans `notifications` avec push_status='pending'.
+// Le worker `process-push-queue` (cron toutes les minutes) draine la
+// file et envoie les push FCM de façon asynchrone.
+//
+// Bénéfice : retour immédiat au client (~50ms) même pour 200 destinataires,
+// retry auto en cas d'échec, pas de risque de timeout côté Edge Function.
 
 import { supabase } from './supabase';
 
@@ -20,13 +23,22 @@ interface NotifyParams {
   metadata?: Record<string, any>;
   /** URL (relative) vers laquelle la notif push doit deeplink quand cliquée */
   link?: string;
+  /** Force l'envoi synchrone (bypass de la queue) — pour les cas critiques uniquement */
+  bypassQueue?: boolean;
 }
 
 export async function notify(p: NotifyParams) {
   const ids = Array.from(new Set(p.recipients.filter((id) => id && id !== p.senderId)));
   if (ids.length === 0) return { inserted: 0 };
 
-  // 1. Insert en DB pour la cloche / l'historique
+  // Metadata enrichie avec le link (le worker le lit pour le payload FCM)
+  const metadata = {
+    ...(p.metadata ?? {}),
+    ...(p.link ? { link: p.link } : {}),
+  };
+
+  // Insert en DB — push_status='pending' par défaut.
+  // Le worker process-push-queue les ramasse dans la minute.
   const rows = ids.map((rid) => ({
     title: p.title,
     message: p.message,
@@ -35,27 +47,32 @@ export async function notify(p: NotifyParams) {
     receiver_id: rid,
     actor_name: p.actorName ?? null,
     is_read: false,
-    metadata: p.metadata ?? null,
+    metadata,
+    push_status: 'pending',
   }));
+
   const { error } = await supabase.from('notifications').insert(rows);
   if (error) {
     console.warn('notify: insert failed', error);
-    // On continue quand même pour le push
+    return { inserted: 0, error: error.message };
   }
 
-  // 2. Push (FCM) best-effort
-  try {
-    await supabase.functions.invoke('send-push', {
-      body: {
-        title: p.title,
-        message: p.message,
-        user_ids: ids,
-        link: p.link, // deep link cliqué côté SW
-        data: { type: p.type, ...(p.link ? { link: p.link } : {}), ...(p.metadata ?? {}) },
-      },
-    });
-  } catch (e) {
-    console.warn('notify: send-push failed', e);
+  // Mode bypass (synchrone) — pour notifs critiques type "code OTP"
+  // qui demandent une livraison immédiate. Pas utilisé actuellement.
+  if (p.bypassQueue) {
+    try {
+      await supabase.functions.invoke('send-push', {
+        body: {
+          title: p.title,
+          message: p.message,
+          user_ids: ids,
+          link: p.link,
+          data: { type: p.type, ...metadata },
+        },
+      });
+    } catch (e) {
+      console.warn('notify: bypass send-push failed', e);
+    }
   }
 
   return { inserted: ids.length };

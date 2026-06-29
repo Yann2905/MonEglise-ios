@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Users, UsersRound, BellRing, Calendar, Headphones, TrendingUp, FileText } from 'lucide-react';
+import { Users, UsersRound, BellRing, Calendar, Headphones, TrendingUp, FileText, Activity } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { DashboardHeader } from '@/components/ui/DashboardHeader';
@@ -213,6 +213,13 @@ export default function AdminDashboard() {
           className="w-full h-14 rounded-ios-lg bg-white shadow-ios-sm text-brand-600 font-semibold text-[15px] flex items-center justify-between px-5 active:bg-ios-gray6"
         >
           <span className="flex items-center gap-2"><FileText className="h-5 w-5" /> Rapports annuels</span>
+          <span className="text-ios-gray3">›</span>
+        </button>
+        <button
+          onClick={() => router.push('/admin/queue')}
+          className="w-full h-14 rounded-ios-lg bg-white shadow-ios-sm text-brand-600 font-semibold text-[15px] flex items-center justify-between px-5 active:bg-ios-gray6"
+        >
+          <span className="flex items-center gap-2"><Activity className="h-5 w-5" /> File de notifications</span>
           <span className="text-ios-gray3">›</span>
         </button>
         <button
