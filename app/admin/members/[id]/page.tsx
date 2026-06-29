@@ -20,14 +20,22 @@ export default function MemberDetailPage() {
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const { data: u } = await supabase.from('users').select('*').eq('id', id).maybeSingle();
-      setMember(u as User);
+      // 3 calls en parallèle (gain ~200-400 ms)
+      const [userRes, linksRes, absRes] = await Promise.all([
+        supabase.from('users').select('*').eq('id', id).maybeSingle(),
+        supabase.from('family_members').select('family_id').eq('user_id', id),
+        supabase
+          .from('absences')
+          .select('date, family_name, absent_members')
+          .order('date', { ascending: false })
+          .limit(50),
+      ]);
 
-      const { data: links } = await supabase
-        .from('family_members')
-        .select('family_id')
-        .eq('user_id', id);
-      const famIds = (links as { family_id: string }[] | null)?.map((l) => l.family_id) ?? [];
+      setMember(userRes.data as User);
+
+      const famIds = ((linksRes.data as { family_id: string }[] | null) ?? []).map(
+        (l) => l.family_id
+      );
       if (famIds.length) {
         const { data: fams } = await supabase
           .from('v_families_enriched')
@@ -36,12 +44,7 @@ export default function MemberDetailPage() {
         setFamilies((fams as Family[]) ?? []);
       }
 
-      // Absences où le user apparaît dans absent_members (JSONB)
-      const { data: abs } = await supabase
-        .from('absences')
-        .select('date, family_name, absent_members')
-        .order('date', { ascending: false })
-        .limit(50);
+      const abs = absRes.data;
       const filtered = ((abs as any[]) ?? [])
         .filter((a) => Array.isArray(a.absent_members) && a.absent_members.some((m: any) => m.user_id === id))
         .map((a) => ({ date: a.date, family_name: a.family_name }));

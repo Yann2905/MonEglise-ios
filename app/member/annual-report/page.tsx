@@ -126,7 +126,7 @@ function Content() {
     const t = toast.loading('Envoi du rapport…');
     try {
       // 1. PDF
-      const pdfBlob = generateAnnualReportPdf({
+      const pdfBlob = await generateAnnualReportPdf({
         churchName,
         familyName: selectedFamily.name,
         year: report.year,
@@ -204,9 +204,9 @@ function Content() {
     }
   };
 
-  const previewPdf = () => {
+  const previewPdf = async () => {
     if (!user || !selectedFamily || !report) return;
-    const blob = generateAnnualReportPdf({
+    const blob = await generateAnnualReportPdf({
       churchName,
       familyName: selectedFamily.name,
       year: report.year,

@@ -1,6 +1,9 @@
 'use client';
 
-import jsPDF from 'jspdf';
+// jsPDF est chargé à la demande seulement (lazy import dynamique).
+// Économise ~280 KB dans le bundle principal pour les pages qui n'en
+// ont pas besoin.
+type JsPDFDoc = any;
 
 export interface AbsenceItem {
   user_id: string;
@@ -53,8 +56,9 @@ const COLORS = {
   red: [255, 59, 48] as [number, number, number],
 };
 
-export function generateAnnualReportPdf(data: AnnualReportData): Blob {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+export async function generateAnnualReportPdf(data: AnnualReportData): Promise<Blob> {
+  const { default: jsPDF } = await import('jspdf');
+  const doc: JsPDFDoc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageWidth = 210;
   const pageHeight = 297;
   const margin = 18;

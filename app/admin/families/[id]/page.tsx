@@ -32,39 +32,26 @@ export default function FamilyDetailPage() {
   const loadAll = async () => {
     setLoading(true);
     // Famille
-    const { data: fam } = await supabase
-      .from('v_families_enriched')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-    setFamily(fam as Family);
+    // 3 calls en parallèle au lieu de séquentiels (gain ~200-400 ms)
+    const [famRes, linksRes, allUsersRes] = await Promise.all([
+      supabase.from('v_families_enriched').select('*').eq('id', id).maybeSingle(),
+      supabase.from('family_members').select('user_id').eq('family_id', id),
+      user?.church_id
+        ? supabase.from('users').select('*').eq('church_id', user.church_id).order('first_name')
+        : Promise.resolve({ data: [] as User[] }),
+    ]);
 
-    // Membres de cette famille
-    const { data: links } = await supabase
-      .from('family_members')
-      .select('user_id')
-      .eq('family_id', id);
-    const memberIds = (links as { user_id: string }[] | null)?.map((l) => l.user_id) ?? [];
-    if (memberIds.length) {
-      const { data: users } = await supabase
-        .from('users')
-        .select('*')
-        .in('id', memberIds)
-        .order('first_name');
-      setMembers((users as User[]) ?? []);
-    } else {
-      setMembers([]);
-    }
+    setFamily(famRes.data as Family);
 
-    // Disponibles (non encore dans la famille)
-    if (user?.church_id) {
-      const { data: all } = await supabase
-        .from('users')
-        .select('*')
-        .eq('church_id', user.church_id)
-        .order('first_name');
-      setAvailable(((all as User[]) ?? []).filter((u) => !memberIds.includes(u.id)));
-    }
+    const memberIds = ((linksRes.data as { user_id: string }[] | null) ?? []).map(
+      (l) => l.user_id
+    );
+    const memberIdSet = new Set(memberIds);
+    const allUsers = (allUsersRes.data as User[]) ?? [];
+
+    // Filtre côté client → évite un 4e call DB
+    setMembers(allUsers.filter((u) => memberIdSet.has(u.id)));
+    setAvailable(allUsers.filter((u) => !memberIdSet.has(u.id)));
     setLoading(false);
   };
 

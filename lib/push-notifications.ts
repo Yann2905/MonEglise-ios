@@ -1,8 +1,10 @@
 'use client';
 
-import { initializeApp, getApps } from 'firebase/app';
-import { getMessaging, getToken, isSupported } from 'firebase/messaging';
 import { supabase } from './supabase';
+
+// Firebase SDK est lazy-loadé uniquement quand subscribePush() est appelé
+// → économise ~150 KB dans le bundle initial pour 99% des utilisateurs
+// qui n'activent pas les notifications.
 
 const config = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -15,7 +17,8 @@ const config = {
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
-function getApp() {
+async function getApp() {
+  const { initializeApp, getApps } = await import('firebase/app');
   if (getApps().length > 0) return getApps()[0];
   return initializeApp(config);
 }
@@ -27,6 +30,8 @@ function getApp() {
 export async function subscribePush(userId: string): Promise<{ ok: boolean; reason?: string }> {
   try {
     if (typeof window === 'undefined') return { ok: false, reason: 'not-browser' };
+    // Lazy-import Firebase Messaging seulement maintenant
+    const { getMessaging, getToken, isSupported } = await import('firebase/messaging');
     if (!(await isSupported())) return { ok: false, reason: 'unsupported' };
     if (!('Notification' in window)) return { ok: false, reason: 'no-notification-api' };
     if (!VAPID_KEY) return { ok: false, reason: 'no-vapid' };
@@ -38,7 +43,7 @@ export async function subscribePush(userId: string): Promise<{ ok: boolean; reas
     // Service worker doit être enregistré
     const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
 
-    const app = getApp();
+    const app = await getApp();
     const messaging = getMessaging(app);
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
