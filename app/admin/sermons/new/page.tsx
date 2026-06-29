@@ -173,11 +173,23 @@ export default function NewSermonPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="audio/mpeg,audio/mp3,audio/*"
+            // Pas de "audio/*" : sur Android PWA, ça route via le lecteur
+            // Music qui JOUE le fichier au tap. Les extensions explicites
+            // forcent le sélecteur Fichiers où le tap = sélection.
+            accept=".mp3,.m4a,.aac,.wav,.ogg"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
-              if (f) setAudioFile(f);
+              if (!f) return;
+              const name = f.name.toLowerCase();
+              const ok = ['.mp3', '.m4a', '.aac', '.wav', '.ogg'].some((ext) =>
+                name.endsWith(ext)
+              );
+              if (!ok) {
+                alert('Format audio non supporté. Choisissez un MP3, M4A, AAC, WAV ou OGG.');
+                return;
+              }
+              setAudioFile(f);
             }}
           />
         </div>
