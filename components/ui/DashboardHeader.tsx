@@ -46,7 +46,7 @@ export function DashboardHeader({
   const displayName = prefix ? `${prefix} ${firstName}` : firstName;
 
   return (
-    <header className="relative pt-safe overflow-hidden bg-brand-700 rounded-b-[28px] shadow-[0_8px_24px_-8px_rgba(35,74,135,0.45)]">
+    <header className="relative pt-safe overflow-hidden bg-brand-700">
       {/* Gradient mesh subtil pour profondeur */}
       <div
         aria-hidden
