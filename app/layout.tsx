@@ -5,6 +5,7 @@ import { AuthProvider } from '@/lib/auth-context';
 import { ThemeProvider } from '@/lib/theme-context';
 import { ModalProvider } from '@/lib/modal-context';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
+import { UpdateChecker } from '@/components/UpdateChecker';
 
 export const metadata: Metadata = {
   title: 'MonÉglise',
@@ -79,6 +80,7 @@ export default function RootLayout({
           <AuthProvider>
             <ModalProvider>
               <ServiceWorkerRegister />
+              <UpdateChecker />
               {children}
               <Toaster
                 position="top-center"
