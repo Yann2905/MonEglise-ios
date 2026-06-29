@@ -46,6 +46,7 @@ function RegisterMemberContent() {
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('+225 ');
   const [quartier, setQuartier] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState<'homme' | 'femme' | ''>('');
   const [churchRole, setChurchRole] = useState<string>('fidele');
   const [familyIds, setFamilyIds] = useState<string[]>([]);
@@ -107,6 +108,7 @@ function RegisterMemberContent() {
       gender: gender as 'homme' | 'femme',
       churchRole,
       familyIds,
+      birthDate: birthDate || undefined,
     });
     setLoading(false);
 
@@ -204,6 +206,13 @@ function RegisterMemberContent() {
             value={quartier}
             onChange={(e) => setQuartier(e.target.value)}
             placeholder="Cocody"
+          />
+
+          <IOSTextField
+            label="Date de naissance (optionnel)"
+            type="date"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
           />
 
           {/* Genre */}

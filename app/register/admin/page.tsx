@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Building2, Copy } from 'lucide-react';
+import { ChevronLeft, Building2, Copy, ImagePlus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { uploadImage } from '@/lib/cloudinary';
 import { IOSButton } from '@/components/ui/IOSButton';
 import { IOSTextField } from '@/components/ui/IOSTextField';
 import { IOSAlert } from '@/components/ui/IOSAlert';
@@ -22,8 +23,10 @@ export default function RegisterAdminPage() {
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('+225 ');
   const [quartier, setQuartier] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState<'homme' | 'femme' | ''>('');
   const [churchName, setChurchName] = useState('');
+  const [churchLogo, setChurchLogo] = useState<File | null>(null);
   const [memberCode, setMemberCode] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -49,6 +52,7 @@ export default function RegisterAdminPage() {
       phone: cleanPhone,
       quartier: quartier.trim(),
       gender: gender as 'homme' | 'femme',
+      birthDate: birthDate || undefined,
     });
     setLoading(false);
 
@@ -65,7 +69,7 @@ export default function RegisterAdminPage() {
 
     setLoading(true);
     try {
-      // Crée l'église
+      // 1. Crée l'église
       const { data: churchRow, error } = await supabase
         .from('churches')
         .insert({
@@ -75,9 +79,27 @@ export default function RegisterAdminPage() {
         .select('id')
         .single();
       if (error) throw error;
+      const churchId = churchRow.id as string;
 
-      // Lie l'admin à l'église
-      await supabase.from('users').update({ church_id: churchRow.id }).eq('id', user.id);
+      // 2. Upload du logo si fourni
+      if (churchLogo) {
+        try {
+          const { url, publicId } = await uploadImage(
+            churchLogo,
+            `moneglise/${churchId}/logo`
+          );
+          await supabase
+            .from('churches')
+            .update({ logo_url: url, logo_public_id: publicId })
+            .eq('id', churchId);
+        } catch (e: any) {
+          // Logo échoué = pas bloquant, on continue
+          toast.error("Le logo n'a pas pu être uploadé : " + e.message);
+        }
+      }
+
+      // 3. Lie l'admin à l'église
+      await supabase.from('users').update({ church_id: churchId }).eq('id', user.id);
       await refresh();
 
       setStep('success');
@@ -118,6 +140,8 @@ export default function RegisterAdminPage() {
             setPhone={setPhone}
             quartier={quartier}
             setQuartier={setQuartier}
+            birthDate={birthDate}
+            setBirthDate={setBirthDate}
             gender={gender}
             setGender={setGender}
             loading={loading}
@@ -129,6 +153,8 @@ export default function RegisterAdminPage() {
           <Step2
             churchName={churchName}
             setChurchName={setChurchName}
+            churchLogo={churchLogo}
+            setChurchLogo={setChurchLogo}
             loading={loading}
             onNext={handleStep2}
           />
@@ -151,6 +177,8 @@ function Step1({
   setPhone,
   quartier,
   setQuartier,
+  birthDate,
+  setBirthDate,
   gender,
   setGender,
   loading,
@@ -201,6 +229,13 @@ function Step1({
           placeholder="Cocody"
         />
 
+        <IOSTextField
+          label="Date de naissance (optionnel)"
+          type="date"
+          value={birthDate}
+          onChange={(e: any) => setBirthDate(e.target.value)}
+        />
+
         <div>
           <label className="block text-[13px] font-semibold uppercase tracking-wider text-ios-gray mb-2 px-1">
             Genre
@@ -233,7 +268,9 @@ function Step1({
   );
 }
 
-function Step2({ churchName, setChurchName, loading, onNext }: any) {
+function Step2({ churchName, setChurchName, churchLogo, setChurchLogo, loading, onNext }: any) {
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const logoPreview = churchLogo ? URL.createObjectURL(churchLogo) : null;
   return (
     <>
       <motion.div
@@ -267,14 +304,68 @@ function Step2({ churchName, setChurchName, loading, onNext }: any) {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35, duration: 0.5 }}
-        className="mt-10"
+        className="mt-10 space-y-4"
       >
         <IOSTextField
+          label="Nom"
           value={churchName}
           onChange={(e) => setChurchName(e.target.value)}
           placeholder="Église Évangélique..."
-          onKeyDown={(e) => e.key === 'Enter' && onNext()}
         />
+
+        {/* Upload logo */}
+        <div>
+          <label className="block text-[13px] font-semibold uppercase tracking-wider text-ios-gray mb-2 px-1">
+            Logo (optionnel)
+          </label>
+          {logoPreview ? (
+            <div className="bg-white rounded-ios-lg p-4 shadow-ios-sm flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoPreview}
+                alt="Logo"
+                className="h-16 w-16 rounded-ios object-cover"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-medium truncate">{churchLogo.name}</p>
+                <p className="text-[12px] text-ios-gray">
+                  {(churchLogo.size / 1024).toFixed(0)} KB
+                </p>
+              </div>
+              <button
+                onClick={() => setChurchLogo(null)}
+                className="p-2 text-ios-red active:opacity-60"
+                aria-label="Retirer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => logoInputRef.current?.click()}
+              className="w-full h-20 bg-ios-gray6 rounded-ios-lg border-2 border-dashed border-ios-gray3 text-ios-gray flex flex-col items-center justify-center gap-1 active:bg-ios-gray5"
+            >
+              <ImagePlus className="h-6 w-6" />
+              <span className="text-[13px] font-medium">Ajouter un logo</span>
+            </button>
+          )}
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              if (f.size > 5 * 1024 * 1024) {
+                toast.error('Image trop grosse (max 5 Mo)');
+                return;
+              }
+              setChurchLogo(f);
+              if (logoInputRef.current) logoInputRef.current.value = '';
+            }}
+          />
+        </div>
       </motion.div>
 
       <div className="mt-8">
