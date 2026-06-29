@@ -15,6 +15,7 @@ export default function MemberDashboard() {
   const { user } = useAuth();
 
   const [churchName, setChurchName] = useState('');
+  const [churchLogoUrl, setChurchLogoUrl] = useState<string | null>(null);
   const [latestSermon, setLatestSermon] = useState<any>(null);
   const [nextService, setNextService] = useState<any>(null);
   const [unread, setUnread] = useState(0);
@@ -33,7 +34,7 @@ export default function MemberDashboard() {
         { count: unreadCount },
         { count: fams },
       ] = await Promise.all([
-        supabase.from('churches').select('name').eq('id', churchId).maybeSingle(),
+        supabase.from('churches').select('name, logo_url').eq('id', churchId).maybeSingle(),
         supabase
           .from('sermons')
           .select('*')
@@ -61,6 +62,7 @@ export default function MemberDashboard() {
       ]);
 
       setChurchName((church?.name as string) ?? '');
+      setChurchLogoUrl((church?.logo_url as string) ?? null);
       setLatestSermon(sermon);
       setNextService(service);
       setUnread(unreadCount ?? 0);
@@ -112,6 +114,7 @@ export default function MemberDashboard() {
         lastName={user.last_name}
         avatarUrl={user.avatar_url}
         churchName={churchName}
+        churchLogoUrl={churchLogoUrl}
         unread={unread}
         onAvatarClick={() => router.push('/member/profile')}
         onBellClick={() => router.push('/member/messages')}
@@ -164,6 +167,32 @@ export default function MemberDashboard() {
           onClick={() => router.push('/member/families')}
         />
       </div>
+
+      {/* Rapport annuel — uniquement responsables, en décembre/janvier */}
+      {isResponsible && (new Date().getMonth() === 11 || new Date().getMonth() === 0) && (
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="mx-4 mt-5"
+        >
+          <button
+            onClick={() => router.push('/member/annual-report')}
+            className="w-full rounded-ios-xl bg-gradient-to-br from-brand-700 to-brand-500 p-5 shadow-ios-lg text-white text-left active:opacity-90"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-ios bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <ClipboardCheck className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[11px] font-bold tracking-[1.5px] text-white/80">FIN D'ANNÉE</p>
+                <p className="text-[17px] font-semibold mt-0.5">Préparer le rapport annuel</p>
+              </div>
+              <span className="text-2xl text-white/80">›</span>
+            </div>
+          </button>
+        </motion.div>
+      )}
 
       {/* Verset du jour */}
       <DailyVerse />

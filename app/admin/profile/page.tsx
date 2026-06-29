@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { LogOut, Phone, MapPin, ShieldCheck, Copy, Moon, Sun, Pencil, Bell } from 'lucide-react';
 import { subscribePush } from '@/lib/push-notifications';
+import { LogoEditor } from '@/components/ui/LogoEditor';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
@@ -81,6 +82,22 @@ export default function AdminProfilePage() {
               </button>
             </div>
           </motion.div>
+        )}
+
+        {/* Logo de l'église */}
+        {user.church_id && (
+          <>
+            <SectionLabel>Logo de l'église</SectionLabel>
+            <div className="mb-6 rounded-ios-lg bg-white p-5 shadow-ios-sm flex items-center gap-4">
+              <LogoEditor churchId={user.church_id} size={80} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-medium">Logo</p>
+                <p className="text-[12px] text-ios-gray mt-1 leading-snug">
+                  Visible par tous les membres de l'église dans le header et le welcome.
+                </p>
+              </div>
+            </div>
+          </>
         )}
 
         <SectionLabel>Informations</SectionLabel>

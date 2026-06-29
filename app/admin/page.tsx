@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Users, UsersRound, BellRing, Calendar, Headphones, TrendingUp } from 'lucide-react';
+import { Users, UsersRound, BellRing, Calendar, Headphones, TrendingUp, FileText } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { DashboardHeader } from '@/components/ui/DashboardHeader';
@@ -22,6 +22,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats>({ members: 0, families: 0, unread: 0, absencesWeek: 0 });
   const [latestSermon, setLatestSermon] = useState<any>(null);
   const [churchName, setChurchName] = useState('');
+  const [churchLogoUrl, setChurchLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.church_id) return;
@@ -44,10 +45,11 @@ export default function AdminDashboard() {
 
       const { data: church } = await supabase
         .from('churches')
-        .select('name')
+        .select('name, logo_url')
         .eq('id', churchId)
         .maybeSingle();
       setChurchName((church?.name as string) ?? 'Mon église');
+      setChurchLogoUrl((church?.logo_url as string) ?? null);
 
       const { data: sermon } = await supabase
         .from('sermons')
@@ -106,6 +108,7 @@ export default function AdminDashboard() {
         avatarUrl={user.avatar_url}
         prefix="Pasteur"
         churchName={churchName}
+        churchLogoUrl={churchLogoUrl}
         unread={stats.unread}
         onAvatarClick={() => router.push('/admin/profile')}
         onBellClick={() => router.push('/admin/notifications')}
@@ -203,6 +206,13 @@ export default function AdminDashboard() {
           className="w-full h-14 rounded-ios-lg bg-white shadow-ios-sm text-brand-600 font-semibold text-[15px] flex items-center justify-between px-5 active:bg-ios-gray6"
         >
           <span className="flex items-center gap-2"><TrendingUp className="h-5 w-5" /> Statistiques</span>
+          <span className="text-ios-gray3">›</span>
+        </button>
+        <button
+          onClick={() => router.push('/admin/reports')}
+          className="w-full h-14 rounded-ios-lg bg-white shadow-ios-sm text-brand-600 font-semibold text-[15px] flex items-center justify-between px-5 active:bg-ios-gray6"
+        >
+          <span className="flex items-center gap-2"><FileText className="h-5 w-5" /> Rapports annuels</span>
           <span className="text-ios-gray3">›</span>
         </button>
         <button

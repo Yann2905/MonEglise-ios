@@ -2,6 +2,7 @@
 
 import { Bell } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
+import { cldUrl } from '@/lib/cloudinary';
 
 interface DashboardHeaderProps {
   firstName: string;
@@ -10,6 +11,7 @@ interface DashboardHeaderProps {
   /** ex. "Pasteur" pour l'admin, undefined pour un membre */
   prefix?: string;
   churchName?: string;
+  churchLogoUrl?: string | null;
   unread?: number;
   onAvatarClick?: () => void;
   onBellClick?: () => void;
@@ -26,10 +28,12 @@ export function DashboardHeader({
   avatarUrl,
   prefix,
   churchName,
+  churchLogoUrl,
   unread = 0,
   onAvatarClick,
   onBellClick,
 }: DashboardHeaderProps) {
+  const logoSrc = cldUrl(churchLogoUrl, { w: 96, h: 96 });
   const today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long',
     day: 'numeric',
@@ -111,7 +115,16 @@ export function DashboardHeader({
 
         {/* Filet doré + métadonnées discrètes */}
         <div className="mt-6 flex items-center gap-3">
-          <div className="h-px w-8 bg-gold-400/80" />
+          {logoSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoSrc}
+              alt="Logo église"
+              className="h-7 w-7 rounded-md object-cover ring-1 ring-white/20"
+            />
+          ) : (
+            <div className="h-px w-8 bg-gold-400/80" />
+          )}
           <p className="text-[10.5px] font-semibold uppercase tracking-[2.2px] text-white/65">
             {churchName ? `${churchName} · ${today}` : today}
           </p>

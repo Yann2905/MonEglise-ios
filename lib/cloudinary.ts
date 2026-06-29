@@ -87,6 +87,39 @@ export function cldAudioUrl(
   return `${parts[0]}/upload/${transforms}/${parts[1]}`;
 }
 
+/**
+ * Upload un fichier brut (PDF, etc.) vers Cloudinary.
+ * Utilise le même preset image en mode raw_upload.
+ */
+export function uploadRaw(
+  file: Blob,
+  folder: string,
+  filename: string,
+  onProgress?: (pct: number) => void
+): Promise<CloudinaryImageResult> {
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.append('file', file, filename);
+    form.append('upload_preset', IMAGE_PRESET);
+    form.append('folder', folder);
+    form.append('public_id', filename.replace(/\.[^.]+$/, ''));
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const r = JSON.parse(xhr.responseText);
+        resolve({ url: r.secure_url, publicId: r.public_id });
+      } else reject(new Error(`Upload failed: ${xhr.status} ${xhr.responseText}`));
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    xhr.send(form);
+  });
+}
+
 /** Supprime une ressource Cloudinary via l'Edge Function */
 export async function destroyCloudinary(publicId: string, resourceType: 'image' | 'video' = 'image') {
   const { supabase } = await import('./supabase');

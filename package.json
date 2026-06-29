@@ -15,6 +15,7 @@
     "@supabase/supabase-js": "^2.45.4",
     "firebase": "^11.0.2",
     "framer-motion": "^11.11.1",
+    "jspdf": "^2.5.2",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.4",
     "lucide-react": "^0.453.0",
