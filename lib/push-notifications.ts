@@ -40,8 +40,17 @@ export async function subscribePush(userId: string): Promise<{ ok: boolean; reas
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') return { ok: false, reason: 'denied' };
 
-    // Service worker doit être enregistré
-    const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    // Service worker doit être enregistré.
+    // updateViaCache: 'none' force le browser à toujours fetcher la dernière
+    // version au lieu d'utiliser le cache HTTP → fix iOS/Android qui gardent
+    // une SW obsolète pendant 24h+.
+    const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+      updateViaCache: 'none',
+    });
+    // Force un check de mise à jour à chaque appel pour récupérer les fix SW
+    try {
+      await reg.update();
+    } catch {}
 
     const app = await getApp();
     const messaging = getMessaging(app);

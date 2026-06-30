@@ -1,23 +1,20 @@
-// Service worker Firebase Cloud Messaging
-// - Reçoit les notifications push quand l'app est fermée / en arrière-plan
-// - Incrémente la badge de l'icône PWA (App Badging API)
-// - Deep-link sur clic vers la page concernée
+// MonÉglise — Service Worker pour Web Push (FCM via VAPID)
+// VERSION : 2026-06-30-v2
+//
+// Note : on n'utilise PLUS le SDK Firebase dans la SW. On gère le
+// push event directement → fonctionne sur iOS PWA + Android PWA
+// sans dépendance de runtime, et plus aucun risque d'early-return
+// du SDK. Le Firebase SDK reste utilisé dans la PAGE pour récupérer
+// le FCM token (lib/push-notifications.ts).
 
-importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
-
-firebase.initializeApp({
-  apiKey: 'AIzaSyCDH4u5_DtAB9lwN_emU45Ecf90mhzsC4I',
-  authDomain: 'moneglise-8c5c8.firebaseapp.com',
-  projectId: 'moneglise-8c5c8',
-  storageBucket: 'moneglise-8c5c8.firebasestorage.app',
-  messagingSenderId: '1001792393824',
-  appId: '1:1001792393824:web:72184bfb3a44aa7c542905',
+// Force la nouvelle SW à prendre la main immédiatement
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
 });
 
-const messaging = firebase.messaging();
-
-// Met à jour la badge avec la valeur exacte fournie par le worker
 async function setBadge(count) {
   try {
     if ('setAppBadge' in self.navigator && count > 0) {
@@ -26,35 +23,50 @@ async function setBadge(count) {
       await self.navigator.clearAppBadge();
     }
   } catch (e) {
-    // setAppBadge peut être absent ou non supporté → silence
+    // setAppBadge non supporté → silence
   }
 }
 
-// onBackgroundMessage : DATA-ONLY (le worker envoie pas de champ
-// notification au root). La SW affiche TOUJOURS manuellement.
-messaging.onBackgroundMessage((payload) => {
-  const data = payload.data || {};
-  const badgeCount = parseInt(data.badge_count || '1', 10);
-  setBadge(badgeCount);
+// Gestionnaire principal : déclenché par CHAQUE push FCM reçu
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
 
-  // IMPORTANT : tag UNIQUE par notification (notif_id).
-  // Si on utilise tag='sermon' / 'custom' / 'absence', iOS et Android
-  // groupent les notifs du même tag et REMPLACENT silencieusement
-  // sans banner ni son. Avec un tag unique chaque notif s'affiche
-  // independamment avec banner + son + vibration.
-  const title = data.title || 'MonÉglise';
-  const options = {
-    body: data.message || '',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
-    tag: data.notif_id || `moneglise-${Date.now()}`,
-    renotify: true,
-    requireInteraction: false,
-    vibrate: [200, 100, 200],
-    silent: false,
-    data: data,
-  };
-  return self.registration.showNotification(title, options);
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch (e) {
+    // Fallback texte si le JSON n'est pas parseable
+    payload = { data: { title: 'MonÉglise', message: event.data.text() } };
+  }
+
+  // FCM envoie soit data-only soit {notification, data}
+  // On supporte les deux pour robustesse
+  const data = payload.data || {};
+  const notif = payload.notification || {};
+
+  const title = data.title || notif.title || 'MonÉglise';
+  const body = data.message || notif.body || '';
+  const badgeCount = parseInt(data.badge_count || '1', 10);
+
+  // Tag UNIQUE = notif_id ou timestamp → chaque notif fait son banner + son
+  const tag = data.notif_id || `moneglise-${Date.now()}`;
+
+  event.waitUntil(
+    Promise.all([
+      setBadge(badgeCount),
+      self.registration.showNotification(title, {
+        body,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        tag,
+        renotify: true,
+        requireInteraction: false,
+        vibrate: [200, 100, 200],
+        silent: false,
+        data,
+      }),
+    ])
+  );
 });
 
 // Clic sur une notification → deep-link vers la page concernée + clear badge
@@ -66,38 +78,31 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     (async () => {
-      // 1. Reset compteur SW (le client recalculera la vraie valeur ensuite)
+      // Reset badge (le client recalculera la vraie valeur)
       try {
-        // @ts-ignore
-        self.__badgeCount = 0;
         if ('clearAppBadge' in self.navigator) {
-          // @ts-ignore
           await self.navigator.clearAppBadge();
         }
       } catch {}
 
-      // 2. Focus une fenêtre existante OU en ouvre une nouvelle sur le link
+      // Focus une fenêtre existante OU en ouvre une nouvelle
       const clientList = await self.clients.matchAll({
         type: 'window',
         includeUncontrolled: true,
       });
 
-      // Cherche une fenêtre déjà ouverte → naviguer dessus
       for (const client of clientList) {
         if ('focus' in client && 'navigate' in client) {
           try {
             await client.focus();
-            // @ts-ignore : navigate existe sur WindowClient
             await client.navigate(link);
             return;
           } catch {
-            // Si la navigation échoue (cross-origin par ex), on focus simplement
             return client.focus();
           }
         }
       }
 
-      // Sinon ouvrir une nouvelle fenêtre
       if (self.clients.openWindow) {
         await self.clients.openWindow(link);
       }
