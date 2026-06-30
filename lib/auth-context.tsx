@@ -147,72 +147,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [userId, loadById]);
 
-  /**
-   * Heartbeat last_seen : update toutes les 30 sec quand l'app est en
-   * foreground. Le worker process-push-queue lit ce champ pour skip
-   * les pushes des users actifs (déjà notifiés via Realtime).
-   *
-   * Dépend de userId primitif uniquement → pas de redémarrage à chaque
-   * setUser.
-   */
-  useEffect(() => {
-    if (!userId || typeof window === 'undefined') return;
-    let cancelled = false;
-
-    const ping = async () => {
-      if (cancelled) return;
-      if (document.visibilityState !== 'visible') return;
-      try {
-        await supabase
-          .from('users')
-          .update({ last_seen: new Date().toISOString() })
-          .eq('id', userId);
-      } catch {}
-    };
-
-    /**
-     * Quand l'app passe en background ou est fermée :
-     * marque last_seen comme "vieux" (5 min ago) pour que le worker
-     * envoie immédiatement les pushes en attente sans attendre la
-     * fenêtre d'expiration naturelle.
-     */
-    const markOffline = () => {
-      if (cancelled) return;
-      const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/users?id=eq.${userId}`;
-      const fakeOld = new Date(Date.now() - 5 * 60_000).toISOString();
-      try {
-        // fetch keepalive = équivalent navigator.sendBeacon pour PATCH
-        fetch(url, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''}`,
-            Prefer: 'return=minimal',
-          },
-          body: JSON.stringify({ last_seen: fakeOld }),
-          keepalive: true,
-        }).catch(() => {});
-      } catch {}
-    };
-
-    const onVisChange = () => {
-      if (document.visibilityState === 'visible') ping();
-      else markOffline();
-    };
-
-    ping();
-    const interval = setInterval(ping, 30_000);
-    document.addEventListener('visibilitychange', onVisChange);
-    window.addEventListener('pagehide', markOffline);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisChange);
-      window.removeEventListener('pagehide', markOffline);
-    };
-  }, [userId]);
+  // Heartbeat last_seen retiré : causait des pushes skip à tort sur
+  // multi-device (admin sur iOS + Android = le worker voyait l'admin
+  // comme actif sur l'un et skippait les push pour tous).
+  // Le worker n'utilise plus user_active maintenant — tous les pushes
+  // sont délivrés. Le déduplication in-app/system est gérée par le tag
+  // de la notification (cf firebase-messaging-sw.js).
 
   const refresh = useCallback(async () => {
     if (!user) return;
