@@ -15,6 +15,15 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// Reception du message SKIP_WAITING (envoye par la page quand la SW
+// est en etat 'waiting'). Force l'activation immediate sans attendre
+// que tous les clients ferment l'app.
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 async function setBadge(count) {
   try {
     if ('setAppBadge' in self.navigator && count > 0) {
