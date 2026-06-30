@@ -74,9 +74,30 @@ export async function subscribePush(userId: string): Promise<{ ok: boolean; reas
         { onConflict: 'token' }
       );
 
-    // Foreground messages : silencieux côté Notification API (sinon doublons
-    // avec le service worker qui montre déjà la notif). Le Realtime Supabase
-    // s'occupe de mettre à jour l'UI en temps réel (badges, listes, etc.).
+    // Foreground messages : iOS/Android SUPPRIMENT le banner systeme
+    // quand l'app est ouverte (par design OS). On affiche manuellement
+    // une notification via l'API Notification pour qu'on voie le
+    // banner meme quand on est dans l'app.
+    try {
+      const { onMessage } = await import('firebase/messaging');
+      onMessage(messaging, (payload) => {
+        const data = (payload.data as Record<string, string>) || {};
+        if (Notification.permission !== 'granted') return;
+        const title = data.title || 'MonÉglise';
+        const body = data.message || '';
+        // showNotification via le registration SW pour avoir la meme
+        // experience (tag unique, badge, icone, son via SW)
+        reg.showNotification(title, {
+          body,
+          icon: '/icons/icon-192.png',
+          badge: '/icons/icon-192.png',
+          tag: data.notif_id || `moneglise-${Date.now()}`,
+          renotify: true,
+          requireInteraction: false,
+          data,
+        });
+      });
+    } catch {}
 
     return { ok: true };
   } catch (e: any) {
