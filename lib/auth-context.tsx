@@ -170,14 +170,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {}
     };
 
+    /**
+     * Quand l'app passe en background ou est fermée :
+     * marque last_seen comme "vieux" (5 min ago) pour que le worker
+     * envoie immédiatement les pushes en attente sans attendre la
+     * fenêtre d'expiration naturelle.
+     */
+    const markOffline = () => {
+      if (cancelled) return;
+      const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/users?id=eq.${userId}`;
+      const fakeOld = new Date(Date.now() - 5 * 60_000).toISOString();
+      try {
+        // fetch keepalive = équivalent navigator.sendBeacon pour PATCH
+        fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''}`,
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify({ last_seen: fakeOld }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch {}
+    };
+
+    const onVisChange = () => {
+      if (document.visibilityState === 'visible') ping();
+      else markOffline();
+    };
+
     ping();
     const interval = setInterval(ping, 30_000);
-    document.addEventListener('visibilitychange', ping);
+    document.addEventListener('visibilitychange', onVisChange);
+    window.addEventListener('pagehide', markOffline);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
-      document.removeEventListener('visibilitychange', ping);
+      document.removeEventListener('visibilitychange', onVisChange);
+      window.removeEventListener('pagehide', markOffline);
     };
   }, [userId]);
 
