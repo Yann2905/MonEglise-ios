@@ -137,7 +137,7 @@ export default function MemberAttendancePage() {
         if (church?.admin_id && church.admin_id !== user.id) {
           await notify({
             recipients: [church.admin_id],
-            title: `Appel : ${selectedFamily.name}`,
+            title: `📋 Appel : ${selectedFamily.name}`,
             message: `${user.first_name} ${user.last_name} a enregistré ${absentList.length} absent${absentList.length > 1 ? 's' : ''} sur ${members.length}`,
             type: 'absence',
             senderId: user.id,

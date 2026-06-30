@@ -90,7 +90,7 @@ export default function NewSermonPage() {
         if (ids.length) {
           await notify({
             recipients: ids,
-            title: 'Nouvelle prédication',
+            title: '🎙️ Nouvelle prédication',
             message: audioUrl
               ? `"${theme}" est disponible.`
               : `Une nouvelle prédication "${theme}" a été ajoutée.`,

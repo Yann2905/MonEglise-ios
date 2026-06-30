@@ -107,7 +107,7 @@ function ServiceFormContent() {
         if (ids.length) {
           await sendNotif({
             recipients: ids,
-            title: isEdit ? 'Programme modifié' : 'Nouveau programme',
+            title: isEdit ? '📅 Programme modifié' : '📅 Nouveau programme',
             message: `${finalTitle} — ${new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`,
             type: 'system',
             senderId: user.id,
