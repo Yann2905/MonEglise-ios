@@ -35,22 +35,24 @@ async function bumpBadge() {
   }
 }
 
-// onBackgroundMessage : Firebase SDK affiche déjà la notif quand un champ
-// `notification` est présent. On gère seulement la badge ici (et le cas
-// data-only où on doit afficher manuellement).
+// onBackgroundMessage : on est en mode DATA-ONLY (worker envoie pas de
+// champ notification au root). La SW affiche TOUJOURS manuellement
+// → contrôle total, fonctionne sur iOS PWA + Android PWA.
 messaging.onBackgroundMessage((payload) => {
   bumpBadge();
-  if (payload.notification) return; // SDK a déjà affiché
-  const title = payload.data?.title || 'MonÉglise';
+  const data = payload.data || {};
+  const title = data.title || 'MonÉglise';
   const options = {
-    body: payload.data?.message || '',
+    body: data.message || '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
-    tag: payload.data?.type || 'moneglise',
-    renotify: false,
-    data: payload.data || {},
+    tag: data.type || 'moneglise',
+    renotify: true,
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+    data: data,
   };
-  self.registration.showNotification(title, options);
+  return self.registration.showNotification(title, options);
 });
 
 // Clic sur une notification → deep-link vers la page concernée + clear badge
