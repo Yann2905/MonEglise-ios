@@ -17,30 +17,26 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Compteur de badge (suit le nombre de notifs reçues depuis la dernière vidange)
-async function bumpBadge() {
+// Met à jour la badge avec la valeur exacte fournie par le worker
+async function setBadge(count) {
   try {
-    if ('setAppBadge' in self.navigator) {
-      // On ne connaît pas le compteur réel ici, mais on incrémente d'1 à la louche.
-      // Quand l'app s'ouvre, le client recalcule depuis la DB (Realtime) et
-      // appelle setAppBadge/clearAppBadge avec la vraie valeur.
-      // @ts-ignore
-      const current = (self.__badgeCount ?? 0) + 1;
-      // @ts-ignore
-      self.__badgeCount = current;
-      await self.navigator.setAppBadge(current);
+    if ('setAppBadge' in self.navigator && count > 0) {
+      await self.navigator.setAppBadge(count);
+    } else if ('clearAppBadge' in self.navigator && count === 0) {
+      await self.navigator.clearAppBadge();
     }
   } catch (e) {
     // setAppBadge peut être absent ou non supporté → silence
   }
 }
 
-// onBackgroundMessage : on est en mode DATA-ONLY (worker envoie pas de
-// champ notification au root). La SW affiche TOUJOURS manuellement
-// → contrôle total, fonctionne sur iOS PWA + Android PWA.
+// onBackgroundMessage : DATA-ONLY (le worker envoie pas de champ
+// notification au root). La SW affiche TOUJOURS manuellement.
 messaging.onBackgroundMessage((payload) => {
-  bumpBadge();
   const data = payload.data || {};
+  const badgeCount = parseInt(data.badge_count || '1', 10);
+  setBadge(badgeCount);
+
   const title = data.title || 'MonÉglise';
   const options = {
     body: data.message || '',
