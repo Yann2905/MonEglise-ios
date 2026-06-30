@@ -7,6 +7,7 @@ import { Users, UsersRound, BellRing, Calendar, Headphones, TrendingUp, FileText
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { DashboardHeader } from '@/components/ui/DashboardHeader';
+import { NotificationPrompt } from '@/components/ui/NotificationPrompt';
 import { cn } from '@/lib/utils';
 
 interface Stats {
@@ -113,6 +114,8 @@ export default function AdminDashboard() {
         onAvatarClick={() => router.push('/admin/profile')}
         onBellClick={() => router.push('/admin/notifications')}
       />
+
+      <NotificationPrompt />
 
       {/* Stats cards SOUS le gradient */}
       <div className="mt-5 px-4 grid grid-cols-2 gap-3">

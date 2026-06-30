@@ -7,6 +7,7 @@ import { Calendar, BookOpen, MessageCircle, UsersRound, Headphones, ClipboardChe
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { DashboardHeader } from '@/components/ui/DashboardHeader';
+import { NotificationPrompt } from '@/components/ui/NotificationPrompt';
 import { DailyVerse } from '@/components/ui/DailyVerse';
 import { cn, formatDateLong } from '@/lib/utils';
 
@@ -119,6 +120,8 @@ export default function MemberDashboard() {
         onAvatarClick={() => router.push('/member/profile')}
         onBellClick={() => router.push('/member/messages')}
       />
+
+      <NotificationPrompt />
 
       {/* Pastel cards SOUS le gradient */}
       <div className="mt-5 px-4 grid grid-cols-2 gap-3">
