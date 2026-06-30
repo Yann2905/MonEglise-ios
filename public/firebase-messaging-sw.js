@@ -1,5 +1,5 @@
 // MonÉglise — Service Worker pour Web Push (FCM via VAPID)
-// VERSION : 2026-06-30-v3 (Push Reliability stack)
+// VERSION : 2026-06-30-v4 (Wake-keepalive)
 
 const SUPABASE_URL = 'https://jjnggbkofkadtstxvteo.supabase.co';
 //
@@ -54,6 +54,21 @@ self.addEventListener('push', (event) => {
   // On supporte les deux pour robustesse
   const data = payload.data || {};
   const notif = payload.notification || {};
+
+  // SILENT WAKE : push envoye par le cron wake-tokens pour maintenir
+  // la SW chaude. On ne montre PAS de notif, on appelle juste wake-ack
+  // pour confirmer que le token est vivant (last_ping_at updated).
+  if (data.silent_wake === 'true' && data.token) {
+    event.waitUntil(
+      fetch(`${SUPABASE_URL}/functions/v1/wake-ack`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: data.token }),
+        keepalive: true,
+      }).catch(() => {})
+    );
+    return;
+  }
 
   const title = data.title || notif.title || 'MonÉglise';
   const body = data.message || notif.body || '';
