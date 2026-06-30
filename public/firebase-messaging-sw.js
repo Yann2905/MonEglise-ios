@@ -37,15 +37,21 @@ messaging.onBackgroundMessage((payload) => {
   const badgeCount = parseInt(data.badge_count || '1', 10);
   setBadge(badgeCount);
 
+  // IMPORTANT : tag UNIQUE par notification (notif_id).
+  // Si on utilise tag='sermon' / 'custom' / 'absence', iOS et Android
+  // groupent les notifs du même tag et REMPLACENT silencieusement
+  // sans banner ni son. Avec un tag unique chaque notif s'affiche
+  // independamment avec banner + son + vibration.
   const title = data.title || 'MonÉglise';
   const options = {
     body: data.message || '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
-    tag: data.type || 'moneglise',
+    tag: data.notif_id || `moneglise-${Date.now()}`,
     renotify: true,
     requireInteraction: false,
     vibrate: [200, 100, 200],
+    silent: false,
     data: data,
   };
   return self.registration.showNotification(title, options);
