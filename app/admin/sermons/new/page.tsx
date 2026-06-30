@@ -80,30 +80,31 @@ export default function NewSermonPage() {
       });
       if (error) throw error;
 
-      // Notif aux membres : fire-and-forget en arrière-plan
-      // → l'utilisateur ne wait pas la création des N notifs
-      (async () => {
-        try {
-          const ids = await allChurchMemberIds(user.church_id!, user.id);
-          if (ids.length) {
-            await notify({
-              recipients: ids,
-              title: 'Nouvelle prédication',
-              message: audioUrl
-                ? `"${theme}" est disponible.`
-                : `Une nouvelle prédication "${theme}" a été ajoutée.`,
-              type: 'sermon',
-              senderId: user.id,
-              actorName: `${user.first_name} ${user.last_name}`,
-              link: '/member/sermons',
-            });
-          }
-        } catch {}
-      })();
+      // Notif aux membres : AWAIT avant la navigation.
+      // Sinon router.replace annule le fetch et la notif n'est jamais
+      // inserée → les membres ne recoivent pas le push.
+      // L'insert est rapide (~50ms même pour 200 destinataires car insert
+      // batch + le worker fait l'envoi FCM en async derrière).
+      try {
+        const ids = await allChurchMemberIds(user.church_id!, user.id);
+        if (ids.length) {
+          await notify({
+            recipients: ids,
+            title: 'Nouvelle prédication',
+            message: audioUrl
+              ? `"${theme}" est disponible.`
+              : `Une nouvelle prédication "${theme}" a été ajoutée.`,
+            type: 'sermon',
+            senderId: user.id,
+            actorName: `${user.first_name} ${user.last_name}`,
+            link: '/member/sermons',
+          });
+        }
+      } catch (e) {
+        console.warn('notify sermon failed', e);
+      }
 
       toast.success('Prédication ajoutée');
-      // Retour direct au dashboard (la nouvelle prédication apparait
-      // dans la card "Dernière prédication" via Realtime)
       router.replace('/admin');
     } catch (e: any) {
       toast.error("Échec : " + e.message);
