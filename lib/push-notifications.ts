@@ -87,7 +87,9 @@ export async function subscribePush(userId: string): Promise<{ ok: boolean; reas
         const body = data.message || '';
         // showNotification via le registration SW pour avoir la meme
         // experience (tag unique, badge, icone, son via SW)
-        reg.showNotification(title, {
+        // Cast en any car `renotify` n'est pas dans le type DOM standard
+        // (NotificationOptions) mais est supporte par les browsers
+        const opts: any = {
           body,
           icon: '/icons/icon-192.png',
           badge: '/icons/icon-192.png',
@@ -95,7 +97,8 @@ export async function subscribePush(userId: string): Promise<{ ok: boolean; reas
           renotify: true,
           requireInteraction: false,
           data,
-        });
+        };
+        reg.showNotification(title, opts);
       });
     } catch {}
 
