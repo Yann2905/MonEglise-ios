@@ -74,6 +74,21 @@ export async function subscribePush(userId: string): Promise<{ ok: boolean; reas
         { onConflict: 'token' }
       );
 
+    // Auto-cleanup : supprime les autres tokens du meme user plus vieux
+    // que 24h. Un user peut avoir plusieurs devices, mais les tokens
+    // anciens (>24h sans refresh) sont quasi-toujours stale et causent
+    // des pushes qui partent dans le vide -> FCM accepte mais le device
+    // ne recoit jamais.
+    try {
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      await supabase
+        .from('device_tokens')
+        .delete()
+        .eq('user_id', userId)
+        .neq('token', token)
+        .lt('updated_at', cutoff);
+    } catch {}
+
     // Foreground messages : iOS/Android SUPPRIMENT le banner systeme
     // quand l'app est ouverte (par design OS). On affiche manuellement
     // une notification via l'API Notification pour qu'on voie le
