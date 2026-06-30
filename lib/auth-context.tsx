@@ -102,21 +102,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, [loadById, persist]);
 
-  /** Realtime sub : si les infos du user changent en DB, mise à jour live */
+  /**
+   * Realtime sub : si les infos du user changent en DB, mise à jour live.
+   *
+   * IMPORTANT : dépendance sur user.id (primitif), PAS user (objet).
+   * Si on dépendait de `user`, chaque setUser recréerait le channel.
+   *
+   * On ignore aussi les updates qui ne changent QUE last_seen (heartbeat) —
+   * sinon chaque ping toutes les 30 sec déclenche un re-fetch user qui
+   * propage des re-renders dans toute l'app (sermons reload, audio reset).
+   */
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     const channel = supabase
-      .channel(`current_user_${user.id}`)
+      .channel(`current_user_${userId}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'users',
-          filter: `id=eq.${user.id}`,
+          filter: `id=eq.${userId}`,
         },
-        async () => {
-          const fresh = await loadById(user.id);
+        async (payload) => {
+          const newRec = payload.new as Record<string, unknown> | null;
+          const oldRec = payload.old as Record<string, unknown> | null;
+          // Skip heartbeat-only updates
+          if (newRec && oldRec) {
+            const changed = Object.keys(newRec).filter(
+              (k) => JSON.stringify(newRec[k]) !== JSON.stringify(oldRec[k])
+            );
+            if (changed.length === 1 && changed[0] === 'last_seen') return;
+            if (changed.length === 0) return;
+          }
+          const fresh = await loadById(userId);
           if (fresh) setUser(fresh);
         }
       )
@@ -125,15 +145,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       channel.unsubscribe();
     };
-  }, [user, loadById]);
+  }, [userId, loadById]);
 
   /**
    * Heartbeat last_seen : update toutes les 30 sec quand l'app est en
    * foreground. Le worker process-push-queue lit ce champ pour skip
    * les pushes des users actifs (déjà notifiés via Realtime).
+   *
+   * Dépend de userId primitif uniquement → pas de redémarrage à chaque
+   * setUser.
    */
   useEffect(() => {
-    if (!user || typeof window === 'undefined') return;
+    if (!userId || typeof window === 'undefined') return;
     let cancelled = false;
 
     const ping = async () => {
@@ -143,15 +166,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase
           .from('users')
           .update({ last_seen: new Date().toISOString() })
-          .eq('id', user.id);
+          .eq('id', userId);
       } catch {}
     };
 
-    // 1er ping au mount
     ping();
-    // Puis toutes les 30 sec
     const interval = setInterval(ping, 30_000);
-    // Ping aussi quand l'app revient au premier plan
     document.addEventListener('visibilitychange', ping);
 
     return () => {
@@ -159,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', ping);
     };
-  }, [user]);
+  }, [userId]);
 
   const refresh = useCallback(async () => {
     if (!user) return;
