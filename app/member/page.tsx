@@ -171,12 +171,43 @@ export default function MemberDashboard() {
         />
       </div>
 
+      {/* Hero dernière prédication — placée juste sous le dash, avant le verset */}
+      {latestSermon?.audio_url && (
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="mx-4 mt-5 rounded-ios-xl bg-gradient-to-br from-brand-600 to-brand-500 p-5 shadow-ios-lg text-white"
+        >
+          <p className="text-[11px] font-bold tracking-[1.5px] text-white/80">PRÉDICATION DU DIMANCHE</p>
+          <h2
+            className="mt-2 text-[26px] font-semibold leading-tight"
+            style={{ fontFamily: '"Cormorant Garamond", serif' }}
+          >
+            {latestSermon.theme}
+          </h2>
+          {latestSermon.verses && (
+            <p className="mt-1 text-white/90 text-[14px] italic">{latestSermon.verses}</p>
+          )}
+          <button
+            onClick={() => router.push('/member/sermons')}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-ios bg-white text-brand-600 text-[15px] font-semibold active:opacity-80"
+          >
+            <Headphones className="h-4 w-4" />
+            Écouter
+          </button>
+        </motion.div>
+      )}
+
+      {/* Verset du jour */}
+      <DailyVerse />
+
       {/* Rapport annuel — uniquement responsables, en décembre/janvier */}
       {isResponsible && (new Date().getMonth() === 11 || new Date().getMonth() === 0) && (
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
+          transition={{ delay: 0.25, duration: 0.5 }}
           className="mx-4 mt-5"
         >
           <button
@@ -197,15 +228,12 @@ export default function MemberDashboard() {
         </motion.div>
       )}
 
-      {/* Verset du jour */}
-      <DailyVerse />
-
       {/* Carte "Faire l'appel" pour les responsables */}
       {isResponsible && (
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.5 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
           className="mx-4 mt-5"
         >
           <button
@@ -222,34 +250,6 @@ export default function MemberDashboard() {
               </div>
               <span className="text-2xl text-white/80">›</span>
             </div>
-          </button>
-        </motion.div>
-      )}
-
-      {/* Hero dernière prédication */}
-      {latestSermon?.audio_url && (
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="mx-4 mt-5 rounded-ios-xl bg-gradient-to-br from-brand-600 to-brand-500 p-5 shadow-ios-lg text-white"
-        >
-          <p className="text-[11px] font-bold tracking-[1.5px] text-white/80">PRÉDICATION DU DIMANCHE</p>
-          <h2
-            className="mt-2 text-[26px] font-semibold leading-tight"
-            style={{ fontFamily: '"Cormorant Garamond", serif' }}
-          >
-            {latestSermon.theme}
-          </h2>
-          {latestSermon.verses && (
-            <p className="mt-1 text-white/90 text-[14px] italic">{latestSermon.verses}</p>
-          )}
-          <button
-            onClick={() => router.push('/member/sermons')}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-ios bg-white text-brand-600 text-[15px] font-semibold active:opacity-80"
-          >
-            <Headphones className="h-4 w-4" />
-            Écouter
           </button>
         </motion.div>
       )}
