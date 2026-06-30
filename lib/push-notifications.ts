@@ -70,6 +70,7 @@ export async function subscribePush(userId: string): Promise<{ ok: boolean; reas
           token,
           platform: 'web',
           updated_at: new Date().toISOString(),
+          last_ping_at: new Date().toISOString(),
         },
         { onConflict: 'token' }
       );
@@ -130,4 +131,58 @@ export async function unsubscribePush(): Promise<void> {
     const reg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
     if (reg) await reg.unregister();
   } catch {}
+}
+
+/**
+ * Refresh silencieux du token FCM + ping last_ping_at.
+ *
+ * Appele a chaque ouverture de l app (depuis ServiceWorkerRegister).
+ * - Si l user a deja active les notifs (permission granted + SW existe),
+ *   recupere le token actuel (Firebase peut l avoir rotate).
+ * - Met a jour token + last_ping_at en DB.
+ * - Le worker process-push-queue filtre les tokens stale (>7j sans ping).
+ *
+ * Silent : si l user n'a pas active les notifs, ne fait rien.
+ */
+export async function refreshPushToken(userId: string): Promise<void> {
+  try {
+    if (typeof window === 'undefined') return;
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    if (!VAPID_KEY) return;
+
+    const reg = await navigator.serviceWorker.getRegistration(
+      '/firebase-messaging-sw.js'
+    );
+    if (!reg) return; // User n'a pas active les notifs encore
+
+    const { getMessaging, getToken, isSupported } = await import(
+      'firebase/messaging'
+    );
+    if (!(await isSupported())) return;
+
+    const app = await getApp();
+    const messaging = getMessaging(app);
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: reg,
+    });
+    if (!token) return;
+
+    // Upsert (token frais OU mise a jour de last_ping_at sur le meme token)
+    await supabase
+      .from('device_tokens')
+      .upsert(
+        {
+          user_id: userId,
+          token,
+          platform: 'web',
+          updated_at: new Date().toISOString(),
+          last_ping_at: new Date().toISOString(),
+        },
+        { onConflict: 'token' }
+      );
+  } catch {
+    // Silent fail : on ne veut pas casser l'app si le refresh echoue
+  }
 }

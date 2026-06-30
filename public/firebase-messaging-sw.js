@@ -1,5 +1,7 @@
 // MonÉglise — Service Worker pour Web Push (FCM via VAPID)
-// VERSION : 2026-06-30-v2
+// VERSION : 2026-06-30-v3 (Push Reliability stack)
+
+const SUPABASE_URL = 'https://jjnggbkofkadtstxvteo.supabase.co';
 //
 // Note : on n'utilise PLUS le SDK Firebase dans la SW. On gère le
 // push event directement → fonctionne sur iOS PWA + Android PWA
@@ -60,6 +62,18 @@ self.addEventListener('push', (event) => {
   // Tag UNIQUE = notif_id ou timestamp → chaque notif fait son banner + son
   const tag = data.notif_id || `moneglise-${Date.now()}`;
 
+  // ACK : informe le backend que le push a ete VRAIMENT recu sur le device.
+  // Si push_status='sent' mais push_delivered_at reste NULL apres 60s,
+  // le token est stale -> a nettoyer.
+  const ackPush = data.notif_id
+    ? fetch(`${SUPABASE_URL}/functions/v1/track-delivery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notif_id: data.notif_id }),
+        keepalive: true,
+      }).catch(() => {})
+    : Promise.resolve();
+
   event.waitUntil(
     Promise.all([
       setBadge(badgeCount),
@@ -74,6 +88,7 @@ self.addEventListener('push', (event) => {
         silent: false,
         data,
       }),
+      ackPush,
     ])
   );
 });

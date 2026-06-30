@@ -1,7 +1,10 @@
 'use client';
 import { useEffect } from 'react';
+import { useAuth } from '@/lib/auth-context';
+import { refreshPushToken } from '@/lib/push-notifications';
 
 export function ServiceWorkerRegister() {
+  const { user } = useAuth();
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!('serviceWorker' in navigator)) return;
@@ -50,15 +53,21 @@ export function ServiceWorkerRegister() {
 
       // 4. Si la SW controle deja la page mais une nouvelle version est
       // active maintenant, on reload pour que tout le SW soit a jour.
-      // Detection : controllerchange event
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        // Une nouvelle SW vient de prendre la main → on reload silencieusement
-        // pour s'assurer que tout le code utilise la nouvelle SW
         console.log('[SW] new version activated, reloading...');
       });
+
+      // 5. Heartbeat : refresh silencieux du FCM token + last_ping_at
+      // Le worker filtre les tokens >7j sans ping comme stale.
+      // Donc tant que l'user ouvre l'app, ses tokens restent vivants.
+      if (user?.id) {
+        try {
+          await refreshPushToken(user.id);
+        } catch {}
+      }
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [user?.id]);
   return null;
 }
