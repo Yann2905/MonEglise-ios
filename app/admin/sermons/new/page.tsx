@@ -102,7 +102,9 @@ export default function NewSermonPage() {
       })();
 
       toast.success('Prédication ajoutée');
-      router.replace('/admin/sermons');
+      // Retour direct au dashboard (la nouvelle prédication apparait
+      // dans la card "Dernière prédication" via Realtime)
+      router.replace('/admin');
     } catch (e: any) {
       toast.error("Échec : " + e.message);
     } finally {

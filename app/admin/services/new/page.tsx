@@ -118,7 +118,9 @@ function ServiceFormContent() {
       }
 
       toast.success(isEdit ? 'Programme modifié' : 'Programme ajouté');
-      router.replace('/admin/services');
+      // Retour direct au dashboard (le programme apparait dans la liste
+      // via Realtime quand on y retourne)
+      router.replace('/admin');
     } catch (e: any) {
       toast.error('Échec : ' + e.message);
     } finally {

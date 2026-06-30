@@ -75,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className="min-h-[100dvh] bg-ios-bg-light pb-[100px]">
+    <div className="min-h-[100dvh] bg-ios-bg-light pb-[140px]">
       {children}
 
       <TabBar
