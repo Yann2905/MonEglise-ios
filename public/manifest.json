@@ -1,7 +1,7 @@
 {
   "name": "MonÉglise",
   "short_name": "MonÉglise",
-  "description": "Votre communauté en un seul endroit",
+  "description": "Votre communauté en un seul endroit — sermons, cultes, familles et rapports pour votre église",
   "start_url": "/",
   "id": "/",
   "scope": "/",
@@ -12,7 +12,10 @@
   "theme_color": "#234A87",
   "lang": "fr",
   "dir": "ltr",
-  "categories": ["lifestyle", "social"],
+  "categories": ["lifestyle", "social", "productivity"],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "launch_handler": {
     "client_mode": ["navigate-existing", "auto"]
   },
@@ -25,54 +28,132 @@
       "url": "url"
     }
   },
-  "icons": [
+  "protocol_handlers": [
     {
-      "src": "/icons/icon-72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "protocol": "web+moneglise",
+      "url": "/?deep_link=%s"
+    }
+  ],
+  "file_handlers": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "scope_extensions": [],
+  "handle_links": "preferred",
+  "shortcuts": [
+    {
+      "name": "Messages",
+      "short_name": "Messages",
+      "description": "Voir mes notifications",
+      "url": "/member/messages",
+      "icons": [
+        { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }
+      ]
     },
     {
-      "src": "/icons/icon-96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "name": "Prédications",
+      "short_name": "Prédications",
+      "description": "Écouter les sermons",
+      "url": "/member/sermons",
+      "icons": [
+        { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }
+      ]
     },
     {
-      "src": "/icons/icon-128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "name": "Programmes",
+      "short_name": "Cultes",
+      "description": "Voir les cultes à venir",
+      "url": "/member/services",
+      "icons": [
+        { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }
+      ]
     },
     {
-      "src": "/icons/icon-144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
+      "name": "Profil",
+      "short_name": "Profil",
+      "description": "Mon compte",
+      "url": "/member/profile",
+      "icons": [
+        { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }
+      ]
+    }
+  ],
+  "screenshots": [
     {
-      "src": "/icons/icon-152.png",
-      "sizes": "152x152",
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "form_factor": "narrow",
+      "label": "MonÉglise sur mobile"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "form_factor": "wide",
+      "label": "MonÉglise sur tablette"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
