@@ -3,13 +3,28 @@
   "short_name": "MonÉglise",
   "description": "Votre communauté en un seul endroit",
   "start_url": "/",
+  "id": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "browser"],
   "orientation": "portrait",
   "background_color": "#234A87",
   "theme_color": "#234A87",
   "lang": "fr",
+  "dir": "ltr",
   "categories": ["lifestyle", "social"],
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
   "icons": [
     {
       "src": "/icons/icon-72.png",
