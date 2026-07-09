@@ -60,10 +60,15 @@ export default function AdminFamiliesPage() {
   const createFamily = async () => {
     if (!newName.trim() || !user) return;
     setCreating(true);
+    // responsible_id = NULL par defaut : le pasteur n'est PAS respo
+    // des familles ordinaires. Il est respo uniquement du Comite des
+    // responsables (institutional). Une famille sans respo est en
+    // attente qu'un user s'inscrive comme responsable OU que l'admin
+    // designe un respo via l UI.
     const { error } = await supabase.from('families').insert({
       name: newName.trim(),
       church_id: user.church_id,
-      responsible_id: user.id, // par défaut admin (peut être changé après)
+      responsible_id: null,
     });
     setCreating(false);
     if (error) toast.error(error.message);
