@@ -11,6 +11,7 @@ import { useTheme } from '@/lib/theme-context';
 import { AvatarEditor } from '@/components/ui/AvatarEditor';
 import { IOSAlert } from '@/components/ui/IOSAlert';
 import { NavBar } from '@/components/ui/NavBar';
+import { MyFamiliesSection } from '@/components/ui/MyFamiliesSection';
 import { labelOfChurchRole } from '@/lib/utils';
 
 export default function MemberProfilePage() {
@@ -54,6 +55,9 @@ export default function MemberProfilePage() {
             <Row icon={<ShieldCheck className="h-5 w-5" />} label="Code église" value={user.admin_code} />
           )}
         </Card>
+
+        <SectionLabel className="mt-6">Mes familles</SectionLabel>
+        <MyFamiliesSection />
 
         <SectionLabel className="mt-6">Notifications</SectionLabel>
         <Card>

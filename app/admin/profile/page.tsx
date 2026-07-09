@@ -12,6 +12,7 @@ import { useTheme } from '@/lib/theme-context';
 import { AvatarEditor } from '@/components/ui/AvatarEditor';
 import { IOSAlert } from '@/components/ui/IOSAlert';
 import { NavBar } from '@/components/ui/NavBar';
+import { MyFamiliesSection } from '@/components/ui/MyFamiliesSection';
 import { labelOfChurchRole } from '@/lib/utils';
 
 export default function AdminProfilePage() {
@@ -106,6 +107,9 @@ export default function AdminProfilePage() {
           <Row icon={<MapPin className="h-5 w-5" />} label="Quartier" value={user.quartier || '—'} />
           <Row icon={<ShieldCheck className="h-5 w-5" />} label="Rôle" value="Pasteur principal" />
         </Card>
+
+        <SectionLabel className="mt-6">Mes familles</SectionLabel>
+        <MyFamiliesSection />
 
         <SectionLabel className="mt-6">Notifications</SectionLabel>
         <Card>
