@@ -38,17 +38,15 @@ export default function AdminAttendancePage() {
       return;
     }
     (async () => {
-      const { data: links } = await supabase
+      // Optim : 1 seule query avec JOIN Supabase au lieu de 2 sequentielles
+      const { data } = await supabase
         .from('family_members')
-        .select('user_id')
+        .select('users!inner(*)')
         .eq('family_id', selectedFamily.id);
-      const ids = (links as { user_id: string }[] | null)?.map((l) => l.user_id) ?? [];
-      if (!ids.length) {
-        setMembers([]);
-        return;
-      }
-      const { data } = await supabase.from('users').select('*').in('id', ids).order('first_name');
-      setMembers((data as User[]) ?? []);
+      const users = ((data as { users: User }[]) ?? [])
+        .map((r) => r.users)
+        .sort((a, b) => a.first_name.localeCompare(b.first_name));
+      setMembers(users);
     })();
   }, [selectedFamily]);
 

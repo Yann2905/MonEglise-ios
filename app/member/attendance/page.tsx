@@ -30,51 +30,38 @@ export default function MemberAttendancePage() {
   const [loadingFams, setLoadingFams] = useState(true);
 
   // Charge TOUTES les familles dont l'user est membre (et pas le Comité)
+  // Optim : 1 seule query avec JOIN au lieu de 2 sequentielles
   useEffect(() => {
     if (!user) return;
     (async () => {
       setLoadingFams(true);
-      const { data: links } = await supabase
-        .from('family_members')
-        .select('family_id')
-        .eq('user_id', user.id);
-      const ids = (links as { family_id: string }[] | null)?.map((l) => l.family_id) ?? [];
-      if (!ids.length) {
-        setMyFamilies([]);
-        setLoadingFams(false);
-        return;
-      }
       const { data } = await supabase
-        .from('v_families_enriched')
-        .select('*')
-        .in('id', ids)
-        .eq('is_institutional', false);
-      const list = (data as Family[]) ?? [];
+        .from('family_members')
+        .select('families!inner(*)')
+        .eq('user_id', user.id)
+        .eq('families.is_institutional', false);
+      const list = ((data as { families: Family }[]) ?? []).map((r) => r.families);
       setMyFamilies(list);
-      // Auto-sélection si une seule
       if (list.length === 1) setSelectedFamily(list[0]);
       setLoadingFams(false);
     })();
   }, [user]);
 
-  // Charge les membres de la famille sélectionnée
+  // Charge les membres — 1 seule query JOIN
   useEffect(() => {
     if (!selectedFamily) {
       setMembers([]);
       return;
     }
     (async () => {
-      const { data: links } = await supabase
+      const { data } = await supabase
         .from('family_members')
-        .select('user_id')
+        .select('users!inner(*)')
         .eq('family_id', selectedFamily.id);
-      const ids = (links as { user_id: string }[] | null)?.map((l) => l.user_id) ?? [];
-      if (!ids.length) {
-        setMembers([]);
-        return;
-      }
-      const { data } = await supabase.from('users').select('*').in('id', ids).order('first_name');
-      setMembers((data as User[]) ?? []);
+      const users = ((data as { users: User }[]) ?? [])
+        .map((r) => r.users)
+        .sort((a, b) => a.first_name.localeCompare(b.first_name));
+      setMembers(users);
     })();
   }, [selectedFamily]);
 

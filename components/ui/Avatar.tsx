@@ -3,7 +3,7 @@
 import { cn, getInitials } from '@/lib/utils';
 import { cldUrl } from '@/lib/cloudinary';
 import Image from 'next/image';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 
 interface AvatarProps {
   firstName: string;
@@ -13,7 +13,12 @@ interface AvatarProps {
   className?: string;
 }
 
-export function Avatar({ firstName, lastName, src, size = 44, className }: AvatarProps) {
+/**
+ * Avatar memoise : evite les re-renders inutiles dans les longues listes
+ * (membres, familles, notifications). Rendu 3-5x moins souvent lors des
+ * scroll ou state changes non-related.
+ */
+function AvatarInner({ firstName, lastName, src, size = 44, className }: AvatarProps) {
   const [errored, setErrored] = useState(false);
   // Demande à Cloudinary la version optimisée (taille × densité écran 2x)
   // → réduit le poids réseau de ~95% sur les listes de membres
@@ -51,3 +56,5 @@ export function Avatar({ firstName, lastName, src, size = 44, className }: Avata
     </div>
   );
 }
+
+export const Avatar = memo(AvatarInner);

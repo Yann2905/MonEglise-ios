@@ -9,6 +9,22 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_ID: BUILD_ID,
   },
+  // Optim prod : supprime les console.* sauf error/warn en build final
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? { exclude: ['error', 'warn'] }
+        : false,
+  },
+  // Optim experimentale : reduit le bundle en tree-shakant les libs lourdes
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'framer-motion',
+      'react-hot-toast',
+      '@supabase/supabase-js',
+    ],
+  },
   images: {
     remotePatterns: [
       {
@@ -20,7 +36,15 @@ const nextConfig = {
         hostname: 'res.cloudinary.com',
       },
     ],
+    // Formats modernes en priorite (bandwidth economise ~40%)
+    formats: ['image/avif', 'image/webp'],
+    // Cache long des images optimisees
+    minimumCacheTTL: 60 * 60 * 24 * 30,
   },
+  // Compresse le JS/HTML (Vercel le fait deja mais ceinture + bretelles)
+  compress: true,
+  // Powered-by header inutile
+  poweredByHeader: false,
   // PWA headers pour le service worker + anti-cache HTML
   async headers() {
     return [

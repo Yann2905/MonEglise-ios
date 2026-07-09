@@ -1,14 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { BookOpen, Headphones } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { NavBar } from '@/components/ui/NavBar';
 import { BottomSheet } from '@/components/ui/BottomSheet';
-import { AudioPlayer } from '@/components/ui/AudioPlayer';
 import { formatDateLong } from '@/lib/utils';
 import type { Sermon } from '@/lib/types';
+
+// AudioPlayer lazy-loade seulement quand l'user clique Ecouter
+// (economise ~30KB de JS au premier chargement de la page)
+const AudioPlayer = dynamic(
+  () => import('@/components/ui/AudioPlayer').then((m) => m.AudioPlayer),
+  { ssr: false }
+);
 
 export default function MemberSermonsPage() {
   const { user } = useAuth();

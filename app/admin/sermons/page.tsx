@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Plus, BookOpen, Trash2, Headphones } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -9,9 +10,14 @@ import { supabase } from '@/lib/supabase';
 import { NavBar } from '@/components/ui/NavBar';
 import { IOSAlert } from '@/components/ui/IOSAlert';
 import { BottomSheet } from '@/components/ui/BottomSheet';
-import { AudioPlayer } from '@/components/ui/AudioPlayer';
 import { formatDateLong, cn } from '@/lib/utils';
 import type { Sermon } from '@/lib/types';
+
+// AudioPlayer lazy-loade uniquement quand un sermon est joue
+const AudioPlayer = dynamic(
+  () => import('@/components/ui/AudioPlayer').then((m) => m.AudioPlayer),
+  { ssr: false }
+);
 
 export default function AdminSermonsPage() {
   const { user } = useAuth();
