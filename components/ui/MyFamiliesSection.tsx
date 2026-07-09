@@ -32,11 +32,18 @@ export function MyFamiliesSection() {
       .select('family_id, families!inner(id, name, is_institutional, responsible_id)')
       .eq('user_id', user.id);
 
-    const rows = ((data as any[]) ?? []).map((r) => ({
-      family_id: r.family_id as string,
-      family_name: r.families.name as string,
-      is_institutional: r.families.is_institutional as boolean,
-      is_responsible: (r.families.responsible_id as string | null) === user.id,
+    const rows = ((data ?? []) as unknown as Array<{
+      family_id: string;
+      families: {
+        name: string;
+        is_institutional: boolean;
+        responsible_id: string | null;
+      };
+    }>).map((r) => ({
+      family_id: r.family_id,
+      family_name: r.families.name,
+      is_institutional: r.families.is_institutional,
+      is_responsible: r.families.responsible_id === user.id,
     })) as Membership[];
 
     // Trier : ma famille principale (responsable) en premier, puis alpha

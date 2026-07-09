@@ -40,7 +40,8 @@ export default function MemberAttendancePage() {
         .select('families!inner(*)')
         .eq('user_id', user.id)
         .eq('families.is_institutional', false);
-      const list = ((data as { families: Family }[]) ?? []).map((r) => r.families);
+      const rows = (data ?? []) as unknown as { families: Family }[];
+      const list = rows.map((r) => r.families);
       setMyFamilies(list);
       if (list.length === 1) setSelectedFamily(list[0]);
       setLoadingFams(false);
@@ -58,7 +59,8 @@ export default function MemberAttendancePage() {
         .from('family_members')
         .select('users!inner(*)')
         .eq('family_id', selectedFamily.id);
-      const users = ((data as { users: User }[]) ?? [])
+      const rows = (data ?? []) as unknown as { users: User }[];
+      const users = rows
         .map((r) => r.users)
         .sort((a, b) => a.first_name.localeCompare(b.first_name));
       setMembers(users);
